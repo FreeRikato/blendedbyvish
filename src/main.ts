@@ -470,26 +470,48 @@ const initComparisonSlider = (): void => {
 
     comparisonItems.forEach((item): void => {
         const handle = item.querySelector('.comparison-handle') as HTMLElement;
-        const after = item.querySelector('.comparison-after') as HTMLElement;
         let isDragging = false;
 
-        const updateSlider = (clientX: number): void => {
-            const rect = item.getBoundingClientRect();
-            let x = clientX - rect.left;
-            x = Math.max(0, Math.min(x, rect.width));
-            const percentage = Math.round((x / rect.width) * 100);
+        // Performance optimization: Cache rect and use requestAnimationFrame
+        let cachedRect: DOMRect | null = null;
+        let rafId: number | null = null;
 
-            if (handle) {
-                handle.style.left = `${percentage}%`;
-                handle.setAttribute('aria-valuenow', percentage.toString());
-                handle.setAttribute('aria-valuetext', `${percentage} percent`);
+        const updateSlider = (clientX: number): void => {
+            // Cache rect to avoid layout thrashing
+            if (!cachedRect) {
+                cachedRect = item.getBoundingClientRect();
             }
-            if (after) after.style.clipPath = `inset(0 ${100 - percentage}% 0 0)`;
+
+            const x = clientX - cachedRect.left;
+            const percentage = Math.round((Math.max(0, Math.min(x, cachedRect.width)) / cachedRect.width) * 100);
+
+            // Use rAF for smooth updates
+            if (rafId) {
+                cancelAnimationFrame(rafId);
+            }
+
+            rafId = requestAnimationFrame(() => {
+                // Update CSS custom property instead of direct styles
+                (item as HTMLElement).style.setProperty('--slider-position', `${percentage}%`);
+
+                if (handle) {
+                    handle.setAttribute('aria-valuenow', percentage.toString());
+                    handle.setAttribute('aria-valuetext', `${percentage} percent`);
+                }
+
+                rafId = null;
+            });
+        };
+
+        // Clear cache when interaction ends
+        const clearCache = (): void => {
+            cachedRect = null;
         };
 
         // Mouse events
         const mouseDownHandler = (e: MouseEvent): void => {
             isDragging = true;
+            clearCache();
             e.preventDefault(); // Prevent text selection
         };
 
@@ -500,6 +522,7 @@ const initComparisonSlider = (): void => {
 
         const mouseUpHandler = (): void => {
             isDragging = false;
+            clearCache();
         };
 
         // Touch events - Fixed to prevent scroll trap bug
@@ -509,6 +532,7 @@ const initComparisonSlider = (): void => {
 
         const touchStartHandler = (e: TouchEvent): void => {
             isDragging = true;
+            clearCache();
             touchStartX = e.touches[0].clientX;
             touchStartY = e.touches[0].clientY;
         };
@@ -533,6 +557,7 @@ const initComparisonSlider = (): void => {
 
         const touchEndHandler = (): void => {
             isDragging = false;
+            clearCache();
             touchStartX = 0;
             touchStartY = 0;
         };

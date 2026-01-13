@@ -308,7 +308,6 @@ body {
 .hero-portrait-img {
     width: 100%;
     max-width: 400px;
-    aspect-ratio: 3/4;
     object-fit: cover;
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-lg);
@@ -966,6 +965,7 @@ body {
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-md);
     cursor: col-resize;
+    --slider-position: 50%; /* Performance: CSS custom property for smooth updates */
 }
 
 .comparison-before,
@@ -978,8 +978,8 @@ body {
 }
 
 .comparison-after {
-    clip-path: inset(0 50% 0 0);
-    /* transition removed for instant drag response */
+    clip-path: inset(0 calc(100% - var(--slider-position)) 0 0); /* Use CSS variable for performance */
+    will-change: clip-path; /* Performance: Hint for GPU acceleration */
 }
 
 .comparison-placeholder {
@@ -1011,13 +1011,15 @@ body {
 .comparison-handle {
     position: absolute;
     top: 0;
-    left: 50%;
+    left: var(--slider-position); /* Use CSS variable for performance */
     width: 4px;
     height: 100%;
     background-color: white;
     cursor: col-resize;
     transform: translateX(-50%);
     z-index: 10;
+    will-change: left; /* Performance: Hint for GPU acceleration */
+    touch-action: none; /* Performance: Prevent default touch gestures */
 }
 
 .handle-line {
