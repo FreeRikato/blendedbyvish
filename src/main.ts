@@ -19,8 +19,10 @@ const navMenu = document.getElementById('nav-menu') as HTMLUListElement | null;
 const navLinks = document.querySelectorAll('.nav-link');
 
 if (hamburger && navMenu) {
-    // Toggle mobile menu
-    hamburger.addEventListener('click', (): void => {
+    // Toggle mobile menu - ONLY on click, not swipe
+    hamburger.addEventListener('click', (e: Event): void => {
+        // Prevent any default behavior that might interfere
+        e.preventDefault();
         const isActive = hamburger.classList.toggle('active');
         navMenu.classList.toggle('active');
         hamburger.setAttribute('aria-expanded', isActive.toString());
@@ -32,6 +34,45 @@ if (hamburger && navMenu) {
             document.body.style.overflow = '';
         }
     });
+
+    // Explicitly prevent any touch gestures on the hamburger from opening menu
+    hamburger.addEventListener('touchstart', (): void => {
+        // Store that this is a touch event, not a click
+        hamburger.dataset.touchStarted = 'true';
+    }, { passive: true });
+
+    hamburger.addEventListener('touchend', (): void => {
+        // Clear the touch start flag after a short delay
+        setTimeout(() => {
+            delete hamburger.dataset.touchStarted;
+        }, 100);
+    }, { passive: true });
+
+    // Prevent edge swipe gestures from accidentally opening the menu
+    let touchStartX = 0;
+    let touchStartY = 0;
+
+    document.addEventListener('touchstart', (e: TouchEvent): void => {
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+    }, { passive: true });
+
+    document.addEventListener('touchmove', (e: TouchEvent): void => {
+        const touch = e.touches[0];
+        const deltaX = touch.clientX - touchStartX;
+        const deltaY = touch.clientY - touchStartY;
+
+        // Only prevent default if it's a right-edge swipe (left to right)
+        // and we're not in the middle of the comparison slider
+        const isRightEdgeSwipe = touchStartX < 20 && deltaX > 50 && Math.abs(deltaY) < 50;
+        const isComparisonSlider = (e.target as HTMLElement).closest('.comparison-item');
+
+        if (isRightEdgeSwipe && !isComparisonSlider && !navMenu.classList.contains('active')) {
+            // Allow the swipe to proceed (don't prevent default)
+            // This ensures the menu doesn't open accidentally
+            e.preventDefault();
+        }
+    }, { passive: false });
 
     // Close menu when clicking on a nav link
     navLinks.forEach((link): void => {
@@ -311,18 +352,21 @@ const initLightbox = (): void => {
         const title = item.getAttribute('data-title') || '';
         const category = item.getAttribute('data-category') || '';
 
+        // Get image source from the portfolio item
+        const imgElement = item.querySelector('.portfolio-img') as HTMLImageElement;
+        const imgSrc = imgElement?.src || '';
+
         // Store last focused element before opening
         lastFocusedElement = document.activeElement as HTMLElement;
 
         if (lightboxTitle) lightboxTitle.textContent = title;
         if (lightboxCategory) lightboxCategory.textContent = category;
 
-        // Update lightbox image aria-label dynamically
-        const lightboxImage = lightbox?.querySelector('.lightbox-placeholder') as HTMLElement;
-        if (lightboxImage) {
-            lightboxImage.setAttribute('aria-label',
-                `${title}, ${category} portfolio work by Blended by Vish`
-            );
+        // Update lightbox image
+        const lightboxImg = lightbox?.querySelector('.lightbox-img') as HTMLImageElement;
+        if (lightboxImg) {
+            lightboxImg.src = imgSrc;
+            lightboxImg.alt = `${title}, ${category} portfolio work by Blended by Vish`;
         }
 
         lightbox?.classList.add('active');
