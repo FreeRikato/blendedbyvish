@@ -210,5 +210,297 @@ document.addEventListener('visibilitychange', () => {
         console.log('Page visible - Resuming animations');
     }
 });
+// ===================================
+// NEW FEATURES - UPGRADE FUNCTIONS
+// ===================================
+/**
+ * Initialize Portfolio Lightbox
+ * Handles full-screen modal with navigation and accessibility
+ */
+const initLightbox = () => {
+    const lightbox = document.getElementById('lightbox');
+    const lightboxClose = lightbox?.querySelector('.lightbox-close');
+    const lightboxPrev = lightbox?.querySelector('.lightbox-prev');
+    const lightboxNext = lightbox?.querySelector('.lightbox-next');
+    const lightboxTitle = lightbox?.querySelector('.lightbox-title');
+    const lightboxCategory = lightbox?.querySelector('.lightbox-category');
+    const portfolioItems = document.querySelectorAll('.portfolio-item');
+    let currentIndex = 0;
+    const openLightbox = (index) => {
+        const item = portfolioItems[index];
+        const title = item.getAttribute('data-title') || '';
+        const category = item.getAttribute('data-category') || '';
+        if (lightboxTitle)
+            lightboxTitle.textContent = title;
+        if (lightboxCategory)
+            lightboxCategory.textContent = category;
+        lightbox?.classList.add('active');
+        document.body.style.overflow = 'hidden';
+        // Focus management for accessibility
+        lightboxClose?.focus();
+    };
+    const closeLightbox = () => {
+        lightbox?.classList.remove('active');
+        document.body.style.overflow = '';
+    };
+    const showNext = () => {
+        currentIndex = (currentIndex + 1) % portfolioItems.length;
+        openLightbox(currentIndex);
+    };
+    const showPrev = () => {
+        currentIndex = (currentIndex - 1 + portfolioItems.length) % portfolioItems.length;
+        openLightbox(currentIndex);
+    };
+    // Open lightbox on portfolio item click
+    portfolioItems.forEach((item, index) => {
+        item.addEventListener('click', (event) => {
+            event.preventDefault();
+            currentIndex = index;
+            openLightbox(currentIndex);
+        });
+        // Keyboard accessibility
+        item.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                currentIndex = index;
+                openLightbox(currentIndex);
+            }
+        });
+    });
+    // Close button
+    lightboxClose?.addEventListener('click', closeLightbox);
+    // Navigation buttons
+    lightboxNext?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        showNext();
+    });
+    lightboxPrev?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        showPrev();
+    });
+    // Close on background click
+    lightbox?.addEventListener('click', (e) => {
+        if (e.target === lightbox) {
+            closeLightbox();
+        }
+    });
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+        if (!lightbox?.classList.contains('active'))
+            return;
+        if (e.key === 'Escape') {
+            closeLightbox();
+        }
+        else if (e.key === 'ArrowRight') {
+            showNext();
+        }
+        else if (e.key === 'ArrowLeft') {
+            showPrev();
+        }
+    });
+    console.log('✨ Lightbox initialized');
+};
+/**
+ * Initialize Before & After Comparison Slider
+ * Handles interactive drag to compare images
+ */
+const initComparisonSlider = () => {
+    const comparisonItems = document.querySelectorAll('.comparison-item');
+    comparisonItems.forEach((item) => {
+        const handle = item.querySelector('.comparison-handle');
+        const after = item.querySelector('.comparison-after');
+        let isDragging = false;
+        const updateSlider = (clientX) => {
+            const rect = item.getBoundingClientRect();
+            let x = clientX - rect.left;
+            x = Math.max(0, Math.min(x, rect.width));
+            const percentage = (x / rect.width) * 100;
+            if (handle)
+                handle.style.left = `${percentage}%`;
+            if (after)
+                after.style.clipPath = `inset(0 ${100 - percentage}% 0 0)`;
+        };
+        handle?.addEventListener('mousedown', () => {
+            isDragging = true;
+        });
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging)
+                return;
+            updateSlider(e.clientX);
+        });
+        document.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+        // Touch support
+        handle?.addEventListener('touchstart', () => {
+            isDragging = true;
+        });
+        document.addEventListener('touchmove', (e) => {
+            if (!isDragging)
+                return;
+            updateSlider(e.touches[0].clientX);
+        });
+        document.addEventListener('touchend', () => {
+            isDragging = false;
+        });
+        // Click to jump to position
+        item.addEventListener('click', (e) => {
+            updateSlider(e.clientX);
+        });
+    });
+    console.log('📊 Comparison slider initialized');
+};
+/**
+ * Initialize Testimonials Carousel
+ * Handles auto-scroll, manual navigation, and pause on hover
+ */
+const initTestimonialsCarousel = () => {
+    const track = document.querySelector('.testimonial-track');
+    const dots = document.querySelectorAll('.testimonial-dot');
+    const items = document.querySelectorAll('.testimonial-item');
+    if (!track || items.length === 0)
+        return;
+    let currentIndex = 0;
+    let autoScrollInterval;
+    const scrollDelay = 5000; // 5 seconds
+    const scrollToItem = (index) => {
+        currentIndex = index;
+        const targetItem = items[index];
+        if (targetItem && track) {
+            // Scroll only the track, not the page
+            const scrollLeft = targetItem.offsetLeft - (track.offsetWidth / 2) + (targetItem.offsetWidth / 2);
+            track.scrollLeft = scrollLeft;
+        }
+        // Update dots
+        dots.forEach((dot, i) => {
+            dot.classList.toggle('active', i === index);
+        });
+    };
+    const nextSlide = () => {
+        const nextIndex = (currentIndex + 1) % items.length;
+        scrollToItem(nextIndex);
+    };
+    const startAutoScroll = () => {
+        autoScrollInterval = setInterval(nextSlide, scrollDelay);
+    };
+    const stopAutoScroll = () => {
+        clearInterval(autoScrollInterval);
+    };
+    // Dot navigation
+    dots.forEach((dot) => {
+        dot.addEventListener('click', () => {
+            const index = parseInt(dot.getAttribute('data-index') || '0');
+            scrollToItem(index);
+            stopAutoScroll();
+            startAutoScroll();
+        });
+    });
+    // Pause on hover
+    track.addEventListener('mouseenter', stopAutoScroll);
+    track.addEventListener('mouseleave', startAutoScroll);
+    // Touch/drag support
+    let isDown = false;
+    let startX;
+    let scrollLeft;
+    track.addEventListener('mousedown', (e) => {
+        isDown = true;
+        track.style.cursor = 'grabbing';
+        startX = e.pageX - track.offsetLeft;
+        scrollLeft = track.scrollLeft;
+    });
+    track.addEventListener('mouseleave', () => {
+        isDown = false;
+        track.style.cursor = 'grab';
+    });
+    track.addEventListener('mouseup', () => {
+        isDown = false;
+        track.style.cursor = 'grab';
+    });
+    track.addEventListener('mousemove', (e) => {
+        if (!isDown)
+            return;
+        e.preventDefault();
+        const x = e.pageX - track.offsetLeft;
+        const walk = (x - startX) * 2;
+        track.scrollLeft = scrollLeft - walk;
+    });
+    // Update active dot on scroll
+    track.addEventListener('scroll', () => {
+        const scrollCenter = track.scrollLeft + track.offsetWidth / 2;
+        items.forEach((item, index) => {
+            const htmlItem = item;
+            const itemCenter = htmlItem.offsetLeft + htmlItem.offsetWidth / 2;
+            if (Math.abs(scrollCenter - itemCenter) < htmlItem.offsetWidth / 2) {
+                dots.forEach((dot, i) => {
+                    dot.classList.toggle('active', i === index);
+                });
+                currentIndex = index;
+            }
+        });
+    });
+    // Start auto-scroll
+    startAutoScroll();
+    console.log('💬 Testimonials carousel initialized');
+};
+/**
+ * Initialize FAQ Accordion
+ * Handles expand/collapse with smooth animations
+ */
+const initFAQAccordion = () => {
+    const faqItems = document.querySelectorAll('.faq-item');
+    faqItems.forEach((item) => {
+        const question = item.querySelector('.faq-question');
+        question?.addEventListener('click', () => {
+            const isActive = item.classList.contains('active');
+            const icon = question.querySelector('.faq-icon');
+            // Close all other items (optional - remove if you want multiple open)
+            faqItems.forEach((otherItem) => {
+                if (otherItem !== item) {
+                    otherItem.classList.remove('active');
+                    const otherQuestion = otherItem.querySelector('.faq-question');
+                    otherQuestion?.setAttribute('aria-expanded', 'false');
+                }
+            });
+            // Toggle current item
+            item.classList.toggle('active');
+            question.setAttribute('aria-expanded', (!isActive).toString());
+            // Update icon text
+            if (icon) {
+                icon.textContent = item.classList.contains('active') ? '×' : '+';
+            }
+        });
+        // Keyboard accessibility
+        question?.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                question.click();
+            }
+        });
+    });
+    console.log('❓ FAQ accordion initialized');
+};
+/**
+ * Initialize all new features
+ */
+const initAllFeatures = () => {
+    // Wait for DOM to be ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+            initLightbox();
+            initComparisonSlider();
+            initTestimonialsCarousel();
+            initFAQAccordion();
+        });
+    }
+    else {
+        initLightbox();
+        initComparisonSlider();
+        initTestimonialsCarousel();
+        initFAQAccordion();
+    }
+};
+// Initialize all new features
+initAllFeatures();
 console.log('🎀 Blended by Vish - Portfolio loaded successfully!');
 console.log('💄 Built with Semantic HTML5, Modern CSS, and TypeScript');
+console.log('✨ All interactive features initialized!');

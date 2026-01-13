@@ -268,5 +268,346 @@ document.addEventListener('visibilitychange', (): void => {
     }
 });
 
+// ===================================
+// NEW FEATURES - UPGRADE FUNCTIONS
+// ===================================
+
+/**
+ * Initialize Portfolio Lightbox
+ * Handles full-screen modal with navigation and accessibility
+ */
+const initLightbox = (): void => {
+    const lightbox = document.getElementById('lightbox') as HTMLElement;
+    const lightboxClose = lightbox?.querySelector('.lightbox-close') as HTMLButtonElement;
+    const lightboxPrev = lightbox?.querySelector('.lightbox-prev') as HTMLButtonElement;
+    const lightboxNext = lightbox?.querySelector('.lightbox-next') as HTMLButtonElement;
+    const lightboxTitle = lightbox?.querySelector('.lightbox-title') as HTMLElement;
+    const lightboxCategory = lightbox?.querySelector('.lightbox-category') as HTMLElement;
+
+    const portfolioItems = document.querySelectorAll('.portfolio-item');
+    let currentIndex = 0;
+
+    const openLightbox = (index: number): void => {
+        const item = portfolioItems[index] as HTMLElement;
+        const title = item.getAttribute('data-title') || '';
+        const category = item.getAttribute('data-category') || '';
+
+        if (lightboxTitle) lightboxTitle.textContent = title;
+        if (lightboxCategory) lightboxCategory.textContent = category;
+
+        lightbox?.classList.add('active');
+        document.body.style.overflow = 'hidden';
+
+        // Focus management for accessibility
+        lightboxClose?.focus();
+    };
+
+    const closeLightbox = (): void => {
+        lightbox?.classList.remove('active');
+        document.body.style.overflow = '';
+    };
+
+    const showNext = (): void => {
+        currentIndex = (currentIndex + 1) % portfolioItems.length;
+        openLightbox(currentIndex);
+    };
+
+    const showPrev = (): void => {
+        currentIndex = (currentIndex - 1 + portfolioItems.length) % portfolioItems.length;
+        openLightbox(currentIndex);
+    };
+
+    // Open lightbox on portfolio item click
+    portfolioItems.forEach((item, index): void => {
+        item.addEventListener('click', (event: Event): void => {
+            event.preventDefault();
+            currentIndex = index;
+            openLightbox(currentIndex);
+        });
+
+        // Keyboard accessibility
+        item.addEventListener('keydown', (e: KeyboardEvent): void => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                currentIndex = index;
+                openLightbox(currentIndex);
+            }
+        });
+    });
+
+    // Close button
+    lightboxClose?.addEventListener('click', closeLightbox);
+
+    // Navigation buttons
+    lightboxNext?.addEventListener('click', (e: Event): void => {
+        e.stopPropagation();
+        showNext();
+    });
+
+    lightboxPrev?.addEventListener('click', (e: Event): void => {
+        e.stopPropagation();
+        showPrev();
+    });
+
+    // Close on background click
+    lightbox?.addEventListener('click', (e: Event): void => {
+        if (e.target === lightbox) {
+            closeLightbox();
+        }
+    });
+
+    // Keyboard navigation
+    document.addEventListener('keydown', (e: KeyboardEvent): void => {
+        if (!lightbox?.classList.contains('active')) return;
+
+        if (e.key === 'Escape') {
+            closeLightbox();
+        } else if (e.key === 'ArrowRight') {
+            showNext();
+        } else if (e.key === 'ArrowLeft') {
+            showPrev();
+        }
+    });
+
+    console.log('✨ Lightbox initialized');
+};
+
+/**
+ * Initialize Before & After Comparison Slider
+ * Handles interactive drag to compare images
+ */
+const initComparisonSlider = (): void => {
+    const comparisonItems = document.querySelectorAll('.comparison-item');
+
+    comparisonItems.forEach((item): void => {
+        const handle = item.querySelector('.comparison-handle') as HTMLElement;
+        const after = item.querySelector('.comparison-after') as HTMLElement;
+        let isDragging = false;
+
+        const updateSlider = (clientX: number): void => {
+            const rect = item.getBoundingClientRect();
+            let x = clientX - rect.left;
+            x = Math.max(0, Math.min(x, rect.width));
+            const percentage = (x / rect.width) * 100;
+
+            if (handle) handle.style.left = `${percentage}%`;
+            if (after) after.style.clipPath = `inset(0 ${100 - percentage}% 0 0)`;
+        };
+
+        handle?.addEventListener('mousedown', (): void => {
+            isDragging = true;
+        });
+
+        document.addEventListener('mousemove', (e: MouseEvent): void => {
+            if (!isDragging) return;
+            updateSlider(e.clientX);
+        });
+
+        document.addEventListener('mouseup', (): void => {
+            isDragging = false;
+        });
+
+        // Touch support
+        handle?.addEventListener('touchstart', (): void => {
+            isDragging = true;
+        });
+
+        document.addEventListener('touchmove', (e: TouchEvent): void => {
+            if (!isDragging) return;
+            updateSlider(e.touches[0].clientX);
+        });
+
+        document.addEventListener('touchend', (): void => {
+            isDragging = false;
+        });
+
+        // Click to jump to position
+        item.addEventListener('click', (e: MouseEvent): void => {
+            updateSlider(e.clientX);
+        });
+    });
+
+    console.log('📊 Comparison slider initialized');
+};
+
+/**
+ * Initialize Testimonials Carousel
+ * Handles auto-scroll, manual navigation, and pause on hover
+ */
+const initTestimonialsCarousel = (): void => {
+    const track = document.querySelector('.testimonial-track') as HTMLElement;
+    const dots = document.querySelectorAll('.testimonial-dot');
+    const items = document.querySelectorAll('.testimonial-item');
+
+    if (!track || items.length === 0) return;
+
+    let currentIndex = 0;
+    let autoScrollInterval: ReturnType<typeof setInterval>;
+    const scrollDelay = 5000; // 5 seconds
+
+    const scrollToItem = (index: number): void => {
+        currentIndex = index;
+        const targetItem = items[index] as HTMLElement;
+
+        if (targetItem && track) {
+            // Scroll only the track, not the page
+            const scrollLeft = targetItem.offsetLeft - (track.offsetWidth / 2) + (targetItem.offsetWidth / 2);
+            track.scrollLeft = scrollLeft;
+        }
+
+        // Update dots
+        dots.forEach((dot, i): void => {
+            dot.classList.toggle('active', i === index);
+        });
+    };
+
+    const nextSlide = (): void => {
+        const nextIndex = (currentIndex + 1) % items.length;
+        scrollToItem(nextIndex);
+    };
+
+    const startAutoScroll = (): void => {
+        autoScrollInterval = setInterval(nextSlide, scrollDelay);
+    };
+
+    const stopAutoScroll = (): void => {
+        clearInterval(autoScrollInterval);
+    };
+
+    // Dot navigation
+    dots.forEach((dot): void => {
+        dot.addEventListener('click', (): void => {
+            const index = parseInt(dot.getAttribute('data-index') || '0');
+            scrollToItem(index);
+            stopAutoScroll();
+            startAutoScroll();
+        });
+    });
+
+    // Pause on hover
+    track.addEventListener('mouseenter', stopAutoScroll);
+    track.addEventListener('mouseleave', startAutoScroll);
+
+    // Touch/drag support
+    let isDown = false;
+    let startX: number;
+    let scrollLeft: number;
+
+    track.addEventListener('mousedown', (e: MouseEvent): void => {
+        isDown = true;
+        track.style.cursor = 'grabbing';
+        startX = e.pageX - track.offsetLeft;
+        scrollLeft = track.scrollLeft;
+    });
+
+    track.addEventListener('mouseleave', (): void => {
+        isDown = false;
+        track.style.cursor = 'grab';
+    });
+
+    track.addEventListener('mouseup', (): void => {
+        isDown = false;
+        track.style.cursor = 'grab';
+    });
+
+    track.addEventListener('mousemove', (e: MouseEvent): void => {
+        if (!isDown) return;
+        e.preventDefault();
+        const x = e.pageX - track.offsetLeft;
+        const walk = (x - startX) * 2;
+        track.scrollLeft = scrollLeft - walk;
+    });
+
+    // Update active dot on scroll
+    track.addEventListener('scroll', (): void => {
+        const scrollCenter = track.scrollLeft + track.offsetWidth / 2;
+
+        items.forEach((item, index): void => {
+            const htmlItem = item as HTMLElement;
+            const itemCenter = htmlItem.offsetLeft + htmlItem.offsetWidth / 2;
+            if (Math.abs(scrollCenter - itemCenter) < htmlItem.offsetWidth / 2) {
+                dots.forEach((dot, i): void => {
+                    dot.classList.toggle('active', i === index);
+                });
+                currentIndex = index;
+            }
+        });
+    });
+
+    // Start auto-scroll
+    startAutoScroll();
+
+    console.log('💬 Testimonials carousel initialized');
+};
+
+/**
+ * Initialize FAQ Accordion
+ * Handles expand/collapse with smooth animations
+ */
+const initFAQAccordion = (): void => {
+    const faqItems = document.querySelectorAll('.faq-item');
+
+    faqItems.forEach((item): void => {
+        const question = item.querySelector('.faq-question') as HTMLButtonElement;
+
+        question?.addEventListener('click', (): void => {
+            const isActive = item.classList.contains('active');
+            const icon = question.querySelector('.faq-icon') as HTMLElement;
+
+            // Close all other items (optional - remove if you want multiple open)
+            faqItems.forEach((otherItem): void => {
+                if (otherItem !== item) {
+                    otherItem.classList.remove('active');
+                    const otherQuestion = otherItem.querySelector('.faq-question') as HTMLButtonElement;
+                    otherQuestion?.setAttribute('aria-expanded', 'false');
+                }
+            });
+
+            // Toggle current item
+            item.classList.toggle('active');
+            question.setAttribute('aria-expanded', (!isActive).toString());
+
+            // Update icon text
+            if (icon) {
+                icon.textContent = item.classList.contains('active') ? '×' : '+';
+            }
+        });
+
+        // Keyboard accessibility
+        question?.addEventListener('keydown', (e: KeyboardEvent): void => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                question.click();
+            }
+        });
+    });
+
+    console.log('❓ FAQ accordion initialized');
+};
+
+/**
+ * Initialize all new features
+ */
+const initAllFeatures = (): void => {
+    // Wait for DOM to be ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', (): void => {
+            initLightbox();
+            initComparisonSlider();
+            initTestimonialsCarousel();
+            initFAQAccordion();
+        });
+    } else {
+        initLightbox();
+        initComparisonSlider();
+        initTestimonialsCarousel();
+        initFAQAccordion();
+    }
+};
+
+// Initialize all new features
+initAllFeatures();
+
 console.log('🎀 Blended by Vish - Portfolio loaded successfully!');
 console.log('💄 Built with Semantic HTML5, Modern CSS, and TypeScript');
+console.log('✨ All interactive features initialized!');
