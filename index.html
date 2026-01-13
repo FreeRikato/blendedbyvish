@@ -106,8 +106,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-    <!-- CSS -->
-    <link rel="stylesheet" href="style.css">
+    <!-- Main Stylesheet - Loaded synchronously to prevent FOUC -->
+    <link rel="stylesheet" href="/src/style.css">
 </head>
 <body>
     <!-- Skip Navigation Link for Accessibility -->
@@ -546,7 +546,7 @@
     </div>
 
     <!-- WhatsApp Floating Action Button -->
-    <a href="https://wa.me/919876543210?text=Hi%20Vishwa%2C%20I%27d%20like%20to%20enquire%20about%20a%20booking."
+    <a href="https://wa.me/919787000453?text=Hi%20Vishwa%2C%20I%27d%20like%20to%20enquire%20about%20a%20booking."
        target="_blank"
        rel="noopener noreferrer"
        class="whatsapp-fab"
@@ -557,7 +557,7 @@
         </svg>
     </a>
 
-    <!-- TypeScript Bundle -->
-    <script src="main.js"></script>
+    <!-- Vite Module Entry Point -->
+    <script type="module" src="/src/main.ts"></script>
 </body>
 </html>
