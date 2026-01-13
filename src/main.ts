@@ -469,6 +469,7 @@ const initComparisonSlider = (): void => {
     const cleanupFunctions: Array<() => void> = [];
 
     comparisonItems.forEach((item): void => {
+        const itemElement = item as HTMLElement;
         const handle = item.querySelector('.comparison-handle') as HTMLElement;
         let isDragging = false;
 
@@ -508,11 +509,12 @@ const initComparisonSlider = (): void => {
             cachedRect = null;
         };
 
-        // Mouse events
+        // Mouse events - Attach to entire item, not just handle
         const mouseDownHandler = (e: MouseEvent): void => {
             isDragging = true;
             clearCache();
-            e.preventDefault(); // Prevent text selection
+            e.preventDefault(); // Prevent text selection and image drag
+            updateSlider(e.clientX); // Update position immediately on click
         };
 
         const mouseMoveHandler = (e: MouseEvent): void => {
@@ -525,7 +527,7 @@ const initComparisonSlider = (): void => {
             clearCache();
         };
 
-        // Touch events - Fixed to prevent scroll trap bug
+        // Touch events - Attach to entire item for better mobile UX
         let touchStartX = 0;
         let touchStartY = 0;
         const DRAG_THRESHOLD = 10; // Minimum pixels to determine intent
@@ -535,6 +537,8 @@ const initComparisonSlider = (): void => {
             clearCache();
             touchStartX = e.touches[0].clientX;
             touchStartY = e.touches[0].clientY;
+            // Update position immediately on touch for better responsiveness
+            updateSlider(touchStartX);
         };
 
         const touchMoveHandler = (e: TouchEvent): void => {
@@ -549,7 +553,7 @@ const initComparisonSlider = (): void => {
             if (deltaX > deltaY && deltaX > DRAG_THRESHOLD) {
                 e.preventDefault(); // Block scroll only for horizontal drags
                 updateSlider(touch.clientX);
-            } else {
+            } else if (deltaY > deltaX && deltaY > DRAG_THRESHOLD) {
                 // Allow vertical scrolling to proceed naturally
                 isDragging = false;
             }
@@ -562,33 +566,34 @@ const initComparisonSlider = (): void => {
             touchStartY = 0;
         };
 
-        const clickHandler = (e: Event): void => {
-            const mouseEvent = e as MouseEvent;
-            updateSlider(mouseEvent.clientX);
+        // Prevent native drag behavior on images
+        const dragStartHandler = (e: Event): void => {
+            e.preventDefault();
         };
 
-        // Add event listeners
-        handle?.addEventListener('mousedown', mouseDownHandler);
+        // Add event listeners - Attach to entire item instead of just handle
+        itemElement.addEventListener('mousedown', mouseDownHandler);
         document.addEventListener('mousemove', mouseMoveHandler);
         document.addEventListener('mouseup', mouseUpHandler);
 
-        handle?.addEventListener('touchstart', touchStartHandler, { passive: false });
+        itemElement.addEventListener('touchstart', touchStartHandler, { passive: false });
         document.addEventListener('touchmove', touchMoveHandler, { passive: false });
         document.addEventListener('touchend', touchEndHandler);
 
-        item.addEventListener('click', clickHandler);
+        // Prevent native image dragging
+        itemElement.addEventListener('dragstart', dragStartHandler);
 
         // Store cleanup function for this item
         cleanupFunctions.push((): void => {
-            handle?.removeEventListener('mousedown', mouseDownHandler);
+            itemElement.removeEventListener('mousedown', mouseDownHandler);
             document.removeEventListener('mousemove', mouseMoveHandler);
             document.removeEventListener('mouseup', mouseUpHandler);
 
-            handle?.removeEventListener('touchstart', touchStartHandler);
+            itemElement.removeEventListener('touchstart', touchStartHandler);
             document.removeEventListener('touchmove', touchMoveHandler);
             document.removeEventListener('touchend', touchEndHandler);
 
-            item.removeEventListener('click', clickHandler);
+            itemElement.removeEventListener('dragstart', dragStartHandler);
         });
     });
 
