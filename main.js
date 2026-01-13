@@ -80,6 +80,10 @@ const fadeElements = document.querySelectorAll('.fade-in');
 fadeElements.forEach((element) => {
     fadeInObserver.observe(element);
 });
+// Cleanup IntersectionObserver on page unload
+window.addEventListener('beforeunload', () => {
+    fadeInObserver.disconnect();
+});
 // ===================================
 // STICKY NAVBAR SHADOW ON SCROLL
 // ===================================
@@ -226,22 +230,67 @@ const initLightbox = () => {
     const lightboxCategory = lightbox?.querySelector('.lightbox-category');
     const portfolioItems = document.querySelectorAll('.portfolio-item');
     let currentIndex = 0;
+    let lastFocusedElement = null;
+    // Get all focusable elements in lightbox
+    const getFocusableElements = () => {
+        if (!lightbox)
+            return [];
+        const focusableSelectors = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+        return Array.from(lightbox.querySelectorAll(focusableSelectors));
+    };
+    // Focus trap handler
+    const trapFocus = (e) => {
+        const focusableElements = getFocusableElements();
+        if (focusableElements.length === 0)
+            return;
+        const firstElement = focusableElements[0];
+        const lastElement = focusableElements[focusableElements.length - 1];
+        if (e.key === 'Tab') {
+            if (e.shiftKey) {
+                // Shift+Tab: If on first element, move to last
+                if (document.activeElement === firstElement) {
+                    e.preventDefault();
+                    lastElement.focus();
+                }
+            }
+            else {
+                // Tab: If on last element, move to first
+                if (document.activeElement === lastElement) {
+                    e.preventDefault();
+                    firstElement.focus();
+                }
+            }
+        }
+    };
     const openLightbox = (index) => {
         const item = portfolioItems[index];
         const title = item.getAttribute('data-title') || '';
         const category = item.getAttribute('data-category') || '';
+        // Store last focused element before opening
+        lastFocusedElement = document.activeElement;
         if (lightboxTitle)
             lightboxTitle.textContent = title;
         if (lightboxCategory)
             lightboxCategory.textContent = category;
+        // Update lightbox image aria-label dynamically
+        const lightboxImage = lightbox?.querySelector('.lightbox-placeholder');
+        if (lightboxImage) {
+            lightboxImage.setAttribute('aria-label', `${title}, ${category} portfolio work by Blended by Vish`);
+        }
         lightbox?.classList.add('active');
         document.body.style.overflow = 'hidden';
-        // Focus management for accessibility
+        // Focus first focusable element
         lightboxClose?.focus();
+        // Add focus trap listener
+        document.addEventListener('keydown', trapFocus);
     };
     const closeLightbox = () => {
         lightbox?.classList.remove('active');
         document.body.style.overflow = '';
+        // Remove focus trap listener
+        document.removeEventListener('keydown', trapFocus);
+        // Return focus to last focused element
+        lastFocusedElement?.focus();
     };
     const showNext = () => {
         currentIndex = (currentIndex + 1) % portfolioItems.length;
@@ -250,6 +299,20 @@ const initLightbox = () => {
     const showPrev = () => {
         currentIndex = (currentIndex - 1 + portfolioItems.length) % portfolioItems.length;
         openLightbox(currentIndex);
+    };
+    // Keyboard navigation (separate from focus trap)
+    const keyboardNavHandler = (e) => {
+        if (!lightbox?.classList.contains('active'))
+            return;
+        if (e.key === 'Escape') {
+            closeLightbox();
+        }
+        else if (e.key === 'ArrowRight') {
+            showNext();
+        }
+        else if (e.key === 'ArrowLeft') {
+            showPrev();
+        }
     };
     // Open lightbox on portfolio item click
     portfolioItems.forEach((item, index) => {
@@ -284,21 +347,14 @@ const initLightbox = () => {
             closeLightbox();
         }
     });
-    // Keyboard navigation
-    document.addEventListener('keydown', (e) => {
-        if (!lightbox?.classList.contains('active'))
-            return;
-        if (e.key === 'Escape') {
-            closeLightbox();
-        }
-        else if (e.key === 'ArrowRight') {
-            showNext();
-        }
-        else if (e.key === 'ArrowLeft') {
-            showPrev();
-        }
-    });
-    console.log('✨ Lightbox initialized');
+    // Use a separate listener for navigation to avoid conflicts with focus trap
+    document.addEventListener('keydown', keyboardNavHandler);
+    // Cleanup on page unload
+    const cleanup = () => {
+        document.removeEventListener('keydown', keyboardNavHandler);
+    };
+    window.addEventListener('beforeunload', cleanup);
+    console.log('✨ Lightbox initialized with focus trap and cleanup');
 };
 /**
  * Initialize Before & After Comparison Slider
@@ -306,6 +362,8 @@ const initLightbox = () => {
  */
 const initComparisonSlider = () => {
     const comparisonItems = document.querySelectorAll('.comparison-item');
+    // Store cleanup functions for each item
+    const cleanupFunctions = [];
     comparisonItems.forEach((item) => {
         const handle = item.querySelector('.comparison-handle');
         const after = item.querySelector('.comparison-after');
@@ -314,41 +372,70 @@ const initComparisonSlider = () => {
             const rect = item.getBoundingClientRect();
             let x = clientX - rect.left;
             x = Math.max(0, Math.min(x, rect.width));
-            const percentage = (x / rect.width) * 100;
-            if (handle)
+            const percentage = Math.round((x / rect.width) * 100);
+            if (handle) {
                 handle.style.left = `${percentage}%`;
+                handle.setAttribute('aria-valuenow', percentage.toString());
+                handle.setAttribute('aria-valuetext', `${percentage} percent`);
+            }
             if (after)
                 after.style.clipPath = `inset(0 ${100 - percentage}% 0 0)`;
         };
-        handle?.addEventListener('mousedown', () => {
+        // Mouse events
+        const mouseDownHandler = (e) => {
             isDragging = true;
-        });
-        document.addEventListener('mousemove', (e) => {
+            e.preventDefault(); // Prevent text selection
+        };
+        const mouseMoveHandler = (e) => {
             if (!isDragging)
                 return;
             updateSlider(e.clientX);
-        });
-        document.addEventListener('mouseup', () => {
+        };
+        const mouseUpHandler = () => {
             isDragging = false;
-        });
-        // Touch support
-        handle?.addEventListener('touchstart', () => {
+        };
+        // Touch events
+        const touchStartHandler = () => {
             isDragging = true;
-        });
-        document.addEventListener('touchmove', (e) => {
+        };
+        const touchMoveHandler = (e) => {
             if (!isDragging)
                 return;
+            e.preventDefault(); // Critical: Prevent page scrolling while dragging
             updateSlider(e.touches[0].clientX);
-        });
-        document.addEventListener('touchend', () => {
+        };
+        const touchEndHandler = () => {
             isDragging = false;
-        });
-        // Click to jump to position
-        item.addEventListener('click', (e) => {
+        };
+        const clickHandler = (e) => {
             updateSlider(e.clientX);
+        };
+        // Add event listeners
+        handle?.addEventListener('mousedown', mouseDownHandler);
+        document.addEventListener('mousemove', mouseMoveHandler);
+        document.addEventListener('mouseup', mouseUpHandler);
+        handle?.addEventListener('touchstart', touchStartHandler, { passive: false });
+        document.addEventListener('touchmove', touchMoveHandler, { passive: false });
+        document.addEventListener('touchend', touchEndHandler);
+        item.addEventListener('click', clickHandler);
+        // Store cleanup function for this item
+        cleanupFunctions.push(() => {
+            handle?.removeEventListener('mousedown', mouseDownHandler);
+            document.removeEventListener('mousemove', mouseMoveHandler);
+            document.removeEventListener('mouseup', mouseUpHandler);
+            handle?.removeEventListener('touchstart', touchStartHandler);
+            document.removeEventListener('touchmove', touchMoveHandler);
+            document.removeEventListener('touchend', touchEndHandler);
+            item.removeEventListener('click', clickHandler);
         });
     });
-    console.log('📊 Comparison slider initialized');
+    // Global cleanup function
+    const cleanup = () => {
+        cleanupFunctions.forEach((fn) => fn());
+    };
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', cleanup);
+    console.log('📊 Comparison slider initialized with cleanup');
 };
 /**
  * Initialize Testimonials Carousel
@@ -363,6 +450,17 @@ const initTestimonialsCarousel = () => {
     let currentIndex = 0;
     let autoScrollInterval;
     const scrollDelay = 5000; // 5 seconds
+    // Store event handlers for cleanup
+    const handlers = {
+        dotClick: [],
+        mousedown: null,
+        mouseleave: null,
+        mouseup: null,
+        mousemove: null,
+        scroll: null,
+        mouseenterStop: null,
+        mouseleaveStart: null,
+    };
     const scrollToItem = (index) => {
         currentIndex = index;
         const targetItem = items[index];
@@ -386,46 +484,80 @@ const initTestimonialsCarousel = () => {
     const stopAutoScroll = () => {
         clearInterval(autoScrollInterval);
     };
+    // Cleanup function
+    const cleanup = () => {
+        stopAutoScroll();
+        // Remove dot click handlers
+        dots.forEach((dot) => {
+            const handler = handlers.dotClick.find(h => h(dot));
+            if (handler) {
+                dot.removeEventListener('click', handler);
+            }
+        });
+        // Remove track event handlers
+        if (handlers.mousedown)
+            track.removeEventListener('mousedown', handlers.mousedown);
+        if (handlers.mouseleave)
+            track.removeEventListener('mouseleave', handlers.mouseleave);
+        if (handlers.mouseup)
+            track.removeEventListener('mouseup', handlers.mouseup);
+        if (handlers.mousemove)
+            track.removeEventListener('mousemove', handlers.mousemove);
+        if (handlers.scroll)
+            track.removeEventListener('scroll', handlers.scroll);
+        if (handlers.mouseenterStop)
+            track.removeEventListener('mouseenter', handlers.mouseenterStop);
+        if (handlers.mouseleaveStart)
+            track.removeEventListener('mouseleave', handlers.mouseleaveStart);
+    };
     // Dot navigation
     dots.forEach((dot) => {
-        dot.addEventListener('click', () => {
+        const handler = () => {
             const index = parseInt(dot.getAttribute('data-index') || '0');
             scrollToItem(index);
             stopAutoScroll();
             startAutoScroll();
-        });
+        };
+        handlers.dotClick.push(handler);
+        dot.addEventListener('click', handler);
     });
     // Pause on hover
-    track.addEventListener('mouseenter', stopAutoScroll);
-    track.addEventListener('mouseleave', startAutoScroll);
+    handlers.mouseenterStop = stopAutoScroll;
+    handlers.mouseleaveStart = startAutoScroll;
+    track.addEventListener('mouseenter', handlers.mouseenterStop);
+    track.addEventListener('mouseleave', handlers.mouseleaveStart);
     // Touch/drag support
     let isDown = false;
     let startX;
     let scrollLeft;
-    track.addEventListener('mousedown', (e) => {
+    handlers.mousedown = (e) => {
         isDown = true;
         track.style.cursor = 'grabbing';
         startX = e.pageX - track.offsetLeft;
         scrollLeft = track.scrollLeft;
-    });
-    track.addEventListener('mouseleave', () => {
+    };
+    handlers.mouseleave = () => {
         isDown = false;
         track.style.cursor = 'grab';
-    });
-    track.addEventListener('mouseup', () => {
+    };
+    handlers.mouseup = () => {
         isDown = false;
         track.style.cursor = 'grab';
-    });
-    track.addEventListener('mousemove', (e) => {
+    };
+    handlers.mousemove = (e) => {
         if (!isDown)
             return;
         e.preventDefault();
         const x = e.pageX - track.offsetLeft;
         const walk = (x - startX) * 2;
         track.scrollLeft = scrollLeft - walk;
-    });
+    };
+    track.addEventListener('mousedown', handlers.mousedown);
+    track.addEventListener('mouseleave', handlers.mouseleave);
+    track.addEventListener('mouseup', handlers.mouseup);
+    track.addEventListener('mousemove', handlers.mousemove);
     // Update active dot on scroll
-    track.addEventListener('scroll', () => {
+    handlers.scroll = () => {
         const scrollCenter = track.scrollLeft + track.offsetWidth / 2;
         items.forEach((item, index) => {
             const htmlItem = item;
@@ -437,47 +569,124 @@ const initTestimonialsCarousel = () => {
                 currentIndex = index;
             }
         });
-    });
+    };
+    track.addEventListener('scroll', handlers.scroll);
     // Start auto-scroll
     startAutoScroll();
-    console.log('💬 Testimonials carousel initialized');
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', cleanup);
+    // Cleanup on visibility change (pause in background)
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+            stopAutoScroll();
+        }
+        else {
+            startAutoScroll();
+        }
+    });
+    console.log('💬 Testimonials carousel initialized with cleanup');
 };
 /**
- * Initialize FAQ Accordion
- * Handles expand/collapse with smooth animations
+ * Handle window resize events
+ * Recalculates carousel/slider positions on window resize
  */
-const initFAQAccordion = () => {
-    const faqItems = document.querySelectorAll('.faq-item');
-    faqItems.forEach((item) => {
-        const question = item.querySelector('.faq-question');
-        question?.addEventListener('click', () => {
-            const isActive = item.classList.contains('active');
-            const icon = question.querySelector('.faq-icon');
-            // Close all other items (optional - remove if you want multiple open)
-            faqItems.forEach((otherItem) => {
-                if (otherItem !== item) {
-                    otherItem.classList.remove('active');
-                    const otherQuestion = otherItem.querySelector('.faq-question');
-                    otherQuestion?.setAttribute('aria-expanded', 'false');
+const initResizeHandlers = () => {
+    let resizeTimeout;
+    const handleResize = () => {
+        // Debounce resize events
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+            // 1. Recalculate testimonials carousel position
+            const track = document.querySelector('.testimonial-track');
+            const items = document.querySelectorAll('.testimonial-item');
+            const dots = document.querySelectorAll('.testimonial-dot');
+            if (track && items.length > 0) {
+                // Find current center item
+                const scrollCenter = track.scrollLeft + track.offsetWidth / 2;
+                items.forEach((item, index) => {
+                    const htmlItem = item;
+                    const itemCenter = htmlItem.offsetLeft + htmlItem.offsetWidth / 2;
+                    if (Math.abs(scrollCenter - itemCenter) < htmlItem.offsetWidth / 2) {
+                        dots.forEach((dot, i) => {
+                            dot.classList.toggle('active', i === index);
+                        });
+                    }
+                });
+            }
+            // 2. Reset comparison slider handles to center
+            const comparisonItems = document.querySelectorAll('.comparison-item');
+            comparisonItems.forEach((item) => {
+                const handle = item.querySelector('.comparison-handle');
+                const after = item.querySelector('.comparison-after');
+                if (handle && after) {
+                    handle.style.left = '50%';
+                    after.style.clipPath = 'inset(0 50% 0 0)';
                 }
             });
-            // Toggle current item
-            item.classList.toggle('active');
-            question.setAttribute('aria-expanded', (!isActive).toString());
-            // Update icon text
-            if (icon) {
-                icon.textContent = item.classList.contains('active') ? '×' : '+';
+        }, 250); // Debounce by 250ms
+    };
+    window.addEventListener('resize', handleResize);
+    console.log('📐 Resize handlers initialized');
+};
+/**
+ * Initialize FAQ Accessibility
+ * Manages aria-expanded state for FAQ items
+ */
+const initFAQAccessibility = () => {
+    const faqItems = document.querySelectorAll('.faq-item');
+    faqItems.forEach((item) => {
+        const summary = item.querySelector('.faq-question');
+        const updateAriaExpanded = () => {
+            const isOpen = item.hasAttribute('open');
+            if (summary) {
+                summary.setAttribute('aria-expanded', isOpen.toString());
             }
-        });
-        // Keyboard accessibility
-        question?.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                question.click();
-            }
-        });
+        };
+        // Update on toggle
+        item.addEventListener('toggle', updateAriaExpanded);
+        // Initial state
+        updateAriaExpanded();
     });
-    console.log('❓ FAQ accordion initialized');
+    console.log('📋 FAQ accessibility initialized');
+};
+/**
+ * Initialize Navigation Accessibility
+ * Manages aria-current for active navigation link based on scroll position
+ */
+const initNavigationAccessibility = () => {
+    const sections = document.querySelectorAll('section[id]');
+    const navLinks = document.querySelectorAll('.nav-link');
+    const updateActiveNavLink = () => {
+        let currentSection = '';
+        sections.forEach((section) => {
+            const htmlSection = section;
+            const sectionTop = htmlSection.offsetTop;
+            const sectionHeight = htmlSection.offsetHeight;
+            if (window.scrollY >= sectionTop - 200) {
+                currentSection = section.getAttribute('id') || '';
+            }
+        });
+        navLinks.forEach((link) => {
+            link.removeAttribute('aria-current');
+            const href = link.getAttribute('href');
+            if (href === `#${currentSection}`) {
+                link.setAttribute('aria-current', 'page');
+            }
+        });
+    };
+    // Use throttle for scroll events (defined later in utilities)
+    window.addEventListener('scroll', () => {
+        // Simple throttle implementation
+        if (!window.navScrollThrottle) {
+            window.navScrollThrottle = setTimeout(() => {
+                updateActiveNavLink();
+                window.navScrollThrottle = null;
+            }, 100);
+        }
+    });
+    // Initial call
+    updateActiveNavLink();
+    console.log('🧭 Navigation accessibility initialized');
 };
 /**
  * Initialize all new features
@@ -489,14 +698,18 @@ const initAllFeatures = () => {
             initLightbox();
             initComparisonSlider();
             initTestimonialsCarousel();
-            initFAQAccordion();
+            initResizeHandlers();
+            initFAQAccessibility();
+            initNavigationAccessibility();
         });
     }
     else {
         initLightbox();
         initComparisonSlider();
         initTestimonialsCarousel();
-        initFAQAccordion();
+        initResizeHandlers();
+        initFAQAccessibility();
+        initNavigationAccessibility();
     }
 };
 // Initialize all new features

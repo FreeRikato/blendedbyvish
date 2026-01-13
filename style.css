@@ -56,6 +56,9 @@ body {
     color: var(--color-text);
     line-height: 1.6;
     overflow-x: hidden;
+
+    /* FIX: Prevent scrollbar jump when lightbox opens */
+    scrollbar-gutter: stable;
 }
 
 /* ===================================
@@ -1025,6 +1028,10 @@ body {
     box-shadow: var(--shadow-md);
 }
 
+.faq-item[open] {
+    box-shadow: var(--shadow-md);
+}
+
 .faq-question {
     width: 100%;
     padding: var(--spacing-md);
@@ -1037,6 +1044,18 @@ body {
     align-items: center;
     gap: var(--spacing-sm);
     transition: all var(--transition-normal);
+    list-style: none; /* Remove default triangle */
+    position: relative;
+}
+
+/* Remove WebKit default marker */
+.faq-question::-webkit-details-marker {
+    display: none;
+}
+
+/* Remove default marker for Firefox */
+.faq-question::marker {
+    display: none;
 }
 
 .faq-question:hover {
@@ -1051,7 +1070,9 @@ body {
     flex: 1;
 }
 
-.faq-icon {
+/* Custom indicator using ::after */
+.faq-question::after {
+    content: '+';
     font-family: var(--font-body);
     font-size: 1.5rem;
     font-weight: 600;
@@ -1065,22 +1086,28 @@ body {
     justify-content: center;
 }
 
-.faq-item.active .faq-icon {
+.faq-item[open] .faq-question::after {
     transform: rotate(45deg);
+    content: '×';
 }
 
 .faq-answer {
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.3s ease;
+    padding: 0 var(--spacing-md) var(--spacing-md);
+    animation: fadeIn 0.3s ease;
 }
 
-.faq-item.active .faq-answer {
-    max-height: 500px;
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .faq-answer p {
-    padding: 0 var(--spacing-md) var(--spacing-md);
     font-family: var(--font-body);
     font-size: 1rem;
     line-height: 1.8;
@@ -1104,7 +1131,7 @@ body {
     align-items: center;
     justify-content: center;
     box-shadow: var(--shadow-lg);
-    z-index: 1000;
+    z-index: 1100; /* FIXED: Changed from 1000 to avoid conflict with navbar */
     transition: all var(--transition-normal);
     animation: whatsappPulse 2s infinite;
 }
@@ -1210,4 +1237,147 @@ body {
     .faq-question {
         padding: var(--spacing-sm);
     }
+}
+
+/* ===================================
+   ACCESSIBILITY - VISIBLE FOCUS STYLES
+   =================================== */
+
+/* Portfolio items focus */
+.portfolio-item:focus {
+    outline: 3px solid var(--color-primary);
+    outline-offset: 2px;
+    border-radius: var(--radius-md);
+}
+
+/* Service cards focus */
+.service-card:focus {
+    outline: 3px solid var(--color-primary);
+    outline-offset: 2px;
+    border-radius: var(--radius-lg);
+}
+
+/* FAQ questions focus */
+.faq-question:focus {
+    outline: 3px solid var(--color-primary);
+    outline-offset: -3px;
+}
+
+/* Navigation links focus */
+.nav-link:focus {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+/* Buttons focus */
+.btn:focus,
+.hamburger:focus,
+.lightbox-close:focus,
+.lightbox-nav:focus,
+.testimonial-dot:focus {
+    outline: 3px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+/* Comparison slider handle focus */
+.comparison-handle:focus,
+.handle-button:focus {
+    outline: 3px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+/* High contrast focus for keyboard navigation */
+@media (prefers-contrast: high) {
+    *:focus {
+        outline-width: 4px;
+        outline-style: solid;
+    }
+}
+
+/* ===================================
+   REDUCED MOTION SUPPORT (Accessibility)
+   =================================== */
+@media (prefers-reduced-motion: reduce) {
+    /* Disable all animations for users who prefer reduced motion */
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+
+    /* Specific animation overrides */
+    .fade-in {
+        opacity: 1 !important;
+        transform: none !important;
+    }
+
+    .lightbox-content {
+        animation: none !important;
+    }
+
+    .whatsapp-fab {
+        animation: none !important;
+    }
+
+    /* Keep essential transitions but make them instant */
+    .lightbox-close:hover {
+        transform: none;
+    }
+
+    .lightbox-nav:hover {
+        transform: translateY(-50%);
+    }
+
+    .testimonial-dot:hover,
+    .testimonial-dot.active {
+        transform: scale(1.2);
+        transition: transform 0.01ms ease;
+    }
+
+    .service-card:hover {
+        transform: none;
+    }
+
+    .portfolio-item:hover {
+        transform: none;
+    }
+
+    .testimonial-content:hover {
+        transform: none;
+    }
+
+    .faq-item.active .faq-icon {
+        transition: transform 0.3s ease;
+    }
+}
+
+/* Respect reduced motion for individual animations */
+@media (prefers-reduced-motion: no-preference) {
+    /* Keep existing animations for users who prefer motion */
+    .whatsapp-fab {
+        animation: whatsappPulse 2s infinite;
+    }
+}
+
+/* ===================================
+   SKIP NAVIGATION LINK (Accessibility)
+   =================================== */
+.skip-link {
+    position: absolute;
+    top: -40px;
+    left: 0;
+    background: var(--color-primary);
+    color: white;
+    padding: 8px 16px;
+    text-decoration: none;
+    z-index: 10000;
+    font-weight: 600;
+    transition: top 0.3s ease;
+}
+
+.skip-link:focus {
+    top: 0;
 }

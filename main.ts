@@ -105,6 +105,11 @@ fadeElements.forEach((element): void => {
     fadeInObserver.observe(element);
 });
 
+// Cleanup IntersectionObserver on page unload
+window.addEventListener('beforeunload', (): void => {
+    fadeInObserver.disconnect();
+});
+
 // ===================================
 // STICKY NAVBAR SHADOW ON SCROLL
 // ===================================
@@ -286,25 +291,78 @@ const initLightbox = (): void => {
 
     const portfolioItems = document.querySelectorAll('.portfolio-item');
     let currentIndex = 0;
+    let lastFocusedElement: HTMLElement | null = null;
+
+    // Get all focusable elements in lightbox
+    const getFocusableElements = (): HTMLElement[] => {
+        if (!lightbox) return [];
+        const focusableSelectors = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+        return Array.from(lightbox.querySelectorAll(focusableSelectors)) as HTMLElement[];
+    };
+
+    // Focus trap handler
+    const trapFocus = (e: KeyboardEvent): void => {
+        const focusableElements = getFocusableElements();
+        if (focusableElements.length === 0) return;
+
+        const firstElement = focusableElements[0];
+        const lastElement = focusableElements[focusableElements.length - 1];
+
+        if (e.key === 'Tab') {
+            if (e.shiftKey) {
+                // Shift+Tab: If on first element, move to last
+                if (document.activeElement === firstElement) {
+                    e.preventDefault();
+                    lastElement.focus();
+                }
+            } else {
+                // Tab: If on last element, move to first
+                if (document.activeElement === lastElement) {
+                    e.preventDefault();
+                    firstElement.focus();
+                }
+            }
+        }
+    };
 
     const openLightbox = (index: number): void => {
         const item = portfolioItems[index] as HTMLElement;
         const title = item.getAttribute('data-title') || '';
         const category = item.getAttribute('data-category') || '';
 
+        // Store last focused element before opening
+        lastFocusedElement = document.activeElement as HTMLElement;
+
         if (lightboxTitle) lightboxTitle.textContent = title;
         if (lightboxCategory) lightboxCategory.textContent = category;
+
+        // Update lightbox image aria-label dynamically
+        const lightboxImage = lightbox?.querySelector('.lightbox-placeholder') as HTMLElement;
+        if (lightboxImage) {
+            lightboxImage.setAttribute('aria-label',
+                `${title}, ${category} portfolio work by Blended by Vish`
+            );
+        }
 
         lightbox?.classList.add('active');
         document.body.style.overflow = 'hidden';
 
-        // Focus management for accessibility
+        // Focus first focusable element
         lightboxClose?.focus();
+
+        // Add focus trap listener
+        document.addEventListener('keydown', trapFocus);
     };
 
     const closeLightbox = (): void => {
         lightbox?.classList.remove('active');
         document.body.style.overflow = '';
+
+        // Remove focus trap listener
+        document.removeEventListener('keydown', trapFocus);
+
+        // Return focus to last focused element
+        lastFocusedElement?.focus();
     };
 
     const showNext = (): void => {
@@ -315,6 +373,19 @@ const initLightbox = (): void => {
     const showPrev = (): void => {
         currentIndex = (currentIndex - 1 + portfolioItems.length) % portfolioItems.length;
         openLightbox(currentIndex);
+    };
+
+    // Keyboard navigation (separate from focus trap)
+    const keyboardNavHandler = (e: KeyboardEvent): void => {
+        if (!lightbox?.classList.contains('active')) return;
+
+        if (e.key === 'Escape') {
+            closeLightbox();
+        } else if (e.key === 'ArrowRight') {
+            showNext();
+        } else if (e.key === 'ArrowLeft') {
+            showPrev();
+        }
     };
 
     // Open lightbox on portfolio item click
@@ -356,20 +427,17 @@ const initLightbox = (): void => {
         }
     });
 
-    // Keyboard navigation
-    document.addEventListener('keydown', (e: KeyboardEvent): void => {
-        if (!lightbox?.classList.contains('active')) return;
+    // Use a separate listener for navigation to avoid conflicts with focus trap
+    document.addEventListener('keydown', keyboardNavHandler);
 
-        if (e.key === 'Escape') {
-            closeLightbox();
-        } else if (e.key === 'ArrowRight') {
-            showNext();
-        } else if (e.key === 'ArrowLeft') {
-            showPrev();
-        }
-    });
+    // Cleanup on page unload
+    const cleanup = (): void => {
+        document.removeEventListener('keydown', keyboardNavHandler);
+    };
 
-    console.log('✨ Lightbox initialized');
+    window.addEventListener('beforeunload', cleanup);
+
+    console.log('✨ Lightbox initialized with focus trap and cleanup');
 };
 
 /**
@@ -378,6 +446,9 @@ const initLightbox = (): void => {
  */
 const initComparisonSlider = (): void => {
     const comparisonItems = document.querySelectorAll('.comparison-item');
+
+    // Store cleanup functions for each item
+    const cleanupFunctions: Array<() => void> = [];
 
     comparisonItems.forEach((item): void => {
         const handle = item.querySelector('.comparison-handle') as HTMLElement;
@@ -388,46 +459,84 @@ const initComparisonSlider = (): void => {
             const rect = item.getBoundingClientRect();
             let x = clientX - rect.left;
             x = Math.max(0, Math.min(x, rect.width));
-            const percentage = (x / rect.width) * 100;
+            const percentage = Math.round((x / rect.width) * 100);
 
-            if (handle) handle.style.left = `${percentage}%`;
+            if (handle) {
+                handle.style.left = `${percentage}%`;
+                handle.setAttribute('aria-valuenow', percentage.toString());
+                handle.setAttribute('aria-valuetext', `${percentage} percent`);
+            }
             if (after) after.style.clipPath = `inset(0 ${100 - percentage}% 0 0)`;
         };
 
-        handle?.addEventListener('mousedown', (): void => {
+        // Mouse events
+        const mouseDownHandler = (e: MouseEvent): void => {
             isDragging = true;
-        });
+            e.preventDefault(); // Prevent text selection
+        };
 
-        document.addEventListener('mousemove', (e: MouseEvent): void => {
+        const mouseMoveHandler = (e: MouseEvent): void => {
             if (!isDragging) return;
             updateSlider(e.clientX);
-        });
+        };
 
-        document.addEventListener('mouseup', (): void => {
+        const mouseUpHandler = (): void => {
             isDragging = false;
-        });
+        };
 
-        // Touch support
-        handle?.addEventListener('touchstart', (): void => {
+        // Touch events
+        const touchStartHandler = (): void => {
             isDragging = true;
-        });
+        };
 
-        document.addEventListener('touchmove', (e: TouchEvent): void => {
+        const touchMoveHandler = (e: TouchEvent): void => {
             if (!isDragging) return;
+            e.preventDefault(); // Critical: Prevent page scrolling while dragging
             updateSlider(e.touches[0].clientX);
-        });
+        };
 
-        document.addEventListener('touchend', (): void => {
+        const touchEndHandler = (): void => {
             isDragging = false;
-        });
+        };
 
-        // Click to jump to position
-        item.addEventListener('click', (e: MouseEvent): void => {
+        const clickHandler = (e: MouseEvent): void => {
             updateSlider(e.clientX);
+        };
+
+        // Add event listeners
+        handle?.addEventListener('mousedown', mouseDownHandler);
+        document.addEventListener('mousemove', mouseMoveHandler);
+        document.addEventListener('mouseup', mouseUpHandler);
+
+        handle?.addEventListener('touchstart', touchStartHandler, { passive: false });
+        document.addEventListener('touchmove', touchMoveHandler, { passive: false });
+        document.addEventListener('touchend', touchEndHandler);
+
+        item.addEventListener('click', clickHandler);
+
+        // Store cleanup function for this item
+        cleanupFunctions.push((): void => {
+            handle?.removeEventListener('mousedown', mouseDownHandler);
+            document.removeEventListener('mousemove', mouseMoveHandler);
+            document.removeEventListener('mouseup', mouseUpHandler);
+
+            handle?.removeEventListener('touchstart', touchStartHandler);
+            document.removeEventListener('touchmove', touchMoveHandler);
+            document.removeEventListener('touchend', touchEndHandler);
+
+            item.removeEventListener('click', clickHandler);
         });
     });
 
-    console.log('📊 Comparison slider initialized');
+    // Global cleanup function
+    const cleanup = (): void => {
+        cleanupFunctions.forEach((fn) => fn());
+    };
+
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', cleanup);
+
+    console.log('📊 Comparison slider initialized with cleanup');
 };
 
 /**
@@ -444,6 +553,18 @@ const initTestimonialsCarousel = (): void => {
     let currentIndex = 0;
     let autoScrollInterval: ReturnType<typeof setInterval>;
     const scrollDelay = 5000; // 5 seconds
+
+    // Store event handlers for cleanup
+    const handlers = {
+        dotClick: [] as Array<(dot: HTMLElement) => void>,
+        mousedown: null as ((e: MouseEvent) => void) | null,
+        mouseleave: null as (() => void) | null,
+        mouseup: null as (() => void) | null,
+        mousemove: null as ((e: MouseEvent) => void) | null,
+        scroll: null as (() => void) | null,
+        mouseenterStop: null as (() => void) | null,
+        mouseleaveStart: null as (() => void) | null,
+    };
 
     const scrollToItem = (index: number): void => {
         currentIndex = index;
@@ -474,52 +595,83 @@ const initTestimonialsCarousel = (): void => {
         clearInterval(autoScrollInterval);
     };
 
+    // Cleanup function
+    const cleanup = (): void => {
+        stopAutoScroll();
+
+        // Remove dot click handlers
+        dots.forEach((dot): void => {
+            const handler = handlers.dotClick.find(h => (h as any)(dot));
+            if (handler) {
+                dot.removeEventListener('click', handler as any);
+            }
+        });
+
+        // Remove track event handlers
+        if (handlers.mousedown) track.removeEventListener('mousedown', handlers.mousedown);
+        if (handlers.mouseleave) track.removeEventListener('mouseleave', handlers.mouseleave);
+        if (handlers.mouseup) track.removeEventListener('mouseup', handlers.mouseup);
+        if (handlers.mousemove) track.removeEventListener('mousemove', handlers.mousemove);
+        if (handlers.scroll) track.removeEventListener('scroll', handlers.scroll);
+        if (handlers.mouseenterStop) track.removeEventListener('mouseenter', handlers.mouseenterStop);
+        if (handlers.mouseleaveStart) track.removeEventListener('mouseleave', handlers.mouseleaveStart);
+    };
+
     // Dot navigation
     dots.forEach((dot): void => {
-        dot.addEventListener('click', (): void => {
+        const handler = (): void => {
             const index = parseInt(dot.getAttribute('data-index') || '0');
             scrollToItem(index);
             stopAutoScroll();
             startAutoScroll();
-        });
+        };
+        handlers.dotClick.push(handler);
+        dot.addEventListener('click', handler);
     });
 
     // Pause on hover
-    track.addEventListener('mouseenter', stopAutoScroll);
-    track.addEventListener('mouseleave', startAutoScroll);
+    handlers.mouseenterStop = stopAutoScroll;
+    handlers.mouseleaveStart = startAutoScroll;
+    track.addEventListener('mouseenter', handlers.mouseenterStop);
+    track.addEventListener('mouseleave', handlers.mouseleaveStart);
 
     // Touch/drag support
     let isDown = false;
     let startX: number;
     let scrollLeft: number;
 
-    track.addEventListener('mousedown', (e: MouseEvent): void => {
+    handlers.mousedown = (e: MouseEvent): void => {
         isDown = true;
         track.style.cursor = 'grabbing';
         startX = e.pageX - track.offsetLeft;
         scrollLeft = track.scrollLeft;
-    });
+    };
 
-    track.addEventListener('mouseleave', (): void => {
+    handlers.mouseleave = (): void => {
         isDown = false;
         track.style.cursor = 'grab';
-    });
+    };
 
-    track.addEventListener('mouseup', (): void => {
+    handlers.mouseup = (): void => {
         isDown = false;
         track.style.cursor = 'grab';
-    });
+    };
 
-    track.addEventListener('mousemove', (e: MouseEvent): void => {
+    handlers.mousemove = (e: MouseEvent): void => {
         if (!isDown) return;
         e.preventDefault();
         const x = e.pageX - track.offsetLeft;
         const walk = (x - startX) * 2;
         track.scrollLeft = scrollLeft - walk;
-    });
+    };
+
+    track.addEventListener('mousedown', handlers.mousedown);
+    track.addEventListener('mouseleave', handlers.mouseleave);
+    track.addEventListener('mouseup', handlers.mouseup);
+    track.addEventListener('mousemove', handlers.mousemove);
 
     // Update active dot on scroll
-    track.addEventListener('scroll', (): void => {
+    handlers.scroll = (): void => {
         const scrollCenter = track.scrollLeft + track.offsetWidth / 2;
 
         items.forEach((item, index): void => {
@@ -532,57 +684,151 @@ const initTestimonialsCarousel = (): void => {
                 currentIndex = index;
             }
         });
-    });
+    };
+
+    track.addEventListener('scroll', handlers.scroll);
 
     // Start auto-scroll
     startAutoScroll();
 
-    console.log('💬 Testimonials carousel initialized');
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', cleanup);
+
+    // Cleanup on visibility change (pause in background)
+    document.addEventListener('visibilitychange', (): void => {
+        if (document.hidden) {
+            stopAutoScroll();
+        } else {
+            startAutoScroll();
+        }
+    });
+
+    console.log('💬 Testimonials carousel initialized with cleanup');
 };
 
 /**
- * Initialize FAQ Accordion
- * Handles expand/collapse with smooth animations
+ * Handle window resize events
+ * Recalculates carousel/slider positions on window resize
  */
-const initFAQAccordion = (): void => {
+const initResizeHandlers = (): void => {
+    let resizeTimeout: ReturnType<typeof setTimeout>;
+
+    const handleResize = (): void => {
+        // Debounce resize events
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout((): void => {
+            // 1. Recalculate testimonials carousel position
+            const track = document.querySelector('.testimonial-track') as HTMLElement;
+            const items = document.querySelectorAll('.testimonial-item');
+            const dots = document.querySelectorAll('.testimonial-dot');
+
+            if (track && items.length > 0) {
+                // Find current center item
+                const scrollCenter = track.scrollLeft + track.offsetWidth / 2;
+
+                items.forEach((item, index): void => {
+                    const htmlItem = item as HTMLElement;
+                    const itemCenter = htmlItem.offsetLeft + htmlItem.offsetWidth / 2;
+
+                    if (Math.abs(scrollCenter - itemCenter) < htmlItem.offsetWidth / 2) {
+                        dots.forEach((dot, i): void => {
+                            dot.classList.toggle('active', i === index);
+                        });
+                    }
+                });
+            }
+
+            // 2. Reset comparison slider handles to center
+            const comparisonItems = document.querySelectorAll('.comparison-item');
+            comparisonItems.forEach((item): void => {
+                const handle = item.querySelector('.comparison-handle') as HTMLElement;
+                const after = item.querySelector('.comparison-after') as HTMLElement;
+
+                if (handle && after) {
+                    handle.style.left = '50%';
+                    after.style.clipPath = 'inset(0 50% 0 0)';
+                }
+            });
+        }, 250); // Debounce by 250ms
+    };
+
+    window.addEventListener('resize', handleResize);
+
+    console.log('📐 Resize handlers initialized');
+};
+
+/**
+ * Initialize FAQ Accessibility
+ * Manages aria-expanded state for FAQ items
+ */
+const initFAQAccessibility = (): void => {
     const faqItems = document.querySelectorAll('.faq-item');
 
     faqItems.forEach((item): void => {
-        const question = item.querySelector('.faq-question') as HTMLButtonElement;
+        const summary = item.querySelector('.faq-question') as HTMLElement;
 
-        question?.addEventListener('click', (): void => {
-            const isActive = item.classList.contains('active');
-            const icon = question.querySelector('.faq-icon') as HTMLElement;
-
-            // Close all other items (optional - remove if you want multiple open)
-            faqItems.forEach((otherItem): void => {
-                if (otherItem !== item) {
-                    otherItem.classList.remove('active');
-                    const otherQuestion = otherItem.querySelector('.faq-question') as HTMLButtonElement;
-                    otherQuestion?.setAttribute('aria-expanded', 'false');
-                }
-            });
-
-            // Toggle current item
-            item.classList.toggle('active');
-            question.setAttribute('aria-expanded', (!isActive).toString());
-
-            // Update icon text
-            if (icon) {
-                icon.textContent = item.classList.contains('active') ? '×' : '+';
+        const updateAriaExpanded = (): void => {
+            const isOpen = item.hasAttribute('open');
+            if (summary) {
+                summary.setAttribute('aria-expanded', isOpen.toString());
             }
-        });
+        };
 
-        // Keyboard accessibility
-        question?.addEventListener('keydown', (e: KeyboardEvent): void => {
-            if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                question.click();
-            }
-        });
+        // Update on toggle
+        item.addEventListener('toggle', updateAriaExpanded);
+
+        // Initial state
+        updateAriaExpanded();
     });
 
-    console.log('❓ FAQ accordion initialized');
+    console.log('📋 FAQ accessibility initialized');
+};
+
+/**
+ * Initialize Navigation Accessibility
+ * Manages aria-current for active navigation link based on scroll position
+ */
+const initNavigationAccessibility = (): void => {
+    const sections = document.querySelectorAll('section[id]');
+    const navLinks = document.querySelectorAll('.nav-link');
+
+    const updateActiveNavLink = (): void => {
+        let currentSection = '';
+
+        sections.forEach((section): void => {
+            const htmlSection = section as HTMLElement;
+            const sectionTop = htmlSection.offsetTop;
+            const sectionHeight = htmlSection.offsetHeight;
+
+            if (window.scrollY >= sectionTop - 200) {
+                currentSection = section.getAttribute('id') || '';
+            }
+        });
+
+        navLinks.forEach((link): void => {
+            link.removeAttribute('aria-current');
+            const href = link.getAttribute('href');
+            if (href === `#${currentSection}`) {
+                link.setAttribute('aria-current', 'page');
+            }
+        });
+    };
+
+    // Use throttle for scroll events (defined later in utilities)
+    window.addEventListener('scroll', (): void => {
+        // Simple throttle implementation
+        if (!(window as any).navScrollThrottle) {
+            (window as any).navScrollThrottle = setTimeout((): void => {
+                updateActiveNavLink();
+                (window as any).navScrollThrottle = null;
+            }, 100);
+        }
+    });
+
+    // Initial call
+    updateActiveNavLink();
+
+    console.log('🧭 Navigation accessibility initialized');
 };
 
 /**
@@ -595,13 +841,17 @@ const initAllFeatures = (): void => {
             initLightbox();
             initComparisonSlider();
             initTestimonialsCarousel();
-            initFAQAccordion();
+            initResizeHandlers();
+            initFAQAccessibility();
+            initNavigationAccessibility();
         });
     } else {
         initLightbox();
         initComparisonSlider();
         initTestimonialsCarousel();
-        initFAQAccordion();
+        initResizeHandlers();
+        initFAQAccessibility();
+        initNavigationAccessibility();
     }
 };
 

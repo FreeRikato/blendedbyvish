@@ -6,6 +6,101 @@
     <meta name="description" content="Blended by Vish - Professional Makeup Artist, Hair Stylist, and Saree Drapist in Madurai, India. Exploring the world of matte & glow.">
     <title>Blended by Vish | Makeup Artist in Madurai</title>
 
+    <!-- JSON-LD Schema Markup for LocalBusiness -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "LocalBusiness",
+      "@id": "https://blendedbyvish.com",
+      "name": "Blended by Vish",
+      "alternateName": "Blendedbyvish",
+      "image": "https://blendedbyvish.com/images/hero.jpg",
+      "description": "Professional Makeup Artist, Hair Stylist, and Saree Drapist in Madurai, India. Specializing in bridal makeup, party makeup, and traditional looks.",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "Madurai",
+        "addressLocality": "Madurai",
+        "addressRegion": "Tamil Nadu",
+        "postalCode": "625001",
+        "addressCountry": "IN"
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": "9.9252",
+        "longitude": "78.1198"
+      },
+      "url": "https://blendedbyvish.com",
+      "telephone": "+91-98765-43210",
+      "priceRange": "₹₹",
+      "openingHoursSpecification": [
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+          "opens": "09:00",
+          "closes": "20:00"
+        }
+      ],
+      "sameAs": [
+        "https://instagram.com/blendedbyvish"
+      ],
+      "founder": {
+        "@type": "Person",
+        "name": "Vishwa Dharani",
+        "jobTitle": "Makeup Artist"
+      },
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "5",
+        "reviewCount": "4"
+      },
+      "review": [
+        {
+          "@type": "Review",
+          "author": {
+            "@type": "Person",
+            "name": "Priya S."
+          },
+          "reviewRating": {
+            "@type": "Rating",
+            "ratingValue": "5"
+          },
+          "reviewBody": "Vishwa did my bridal makeup and I absolutely loved it!",
+          "datePublished": "2024-12"
+        },
+        {
+          "@type": "Review",
+          "author": {
+            "@type": "Person",
+            "name": "Meena R."
+          },
+          "reviewRating": {
+            "@type": "Rating",
+            "ratingValue": "5"
+          },
+          "reviewBody": "Professional, talented, and so patient!",
+          "datePublished": "2024-11"
+        }
+      ]
+    }
+    </script>
+
+    <!-- Open Graph Tags -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://blendedbyvish.com">
+    <meta property="og:title" content="Blended by Vish | Makeup Artist in Madurai">
+    <meta property="og:description" content="Professional Makeup Artist, Hair Stylist, and Saree Drapist in Madurai. Exploring the world of matte & glow.">
+    <meta property="og:image" content="https://blendedbyvish.com/images/og-image.jpg">
+
+    <!-- Twitter Card Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://blendedbyvish.com">
+    <meta name="twitter:title" content="Blended by Vish | Makeup Artist in Madurai">
+    <meta name="twitter:description" content="Professional Makeup Artist, Hair Stylist, and Saree Drapist in Madurai. Exploring the world of matte & glow.">
+    <meta name="twitter:image" content="https://blendedbyvish.com/images/twitter-image.jpg">
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://blendedbyvish.com">
+
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,6 +110,9 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <!-- Skip Navigation Link for Accessibility -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
     <!-- Navigation -->
     <nav class="navbar" id="navbar">
         <div class="nav-container">
@@ -46,7 +144,7 @@
     </nav>
 
     <!-- Main Content -->
-    <main>
+    <main id="main-content">
         <!-- Hero Section -->
         <section id="home" class="hero">
             <div class="hero-container">
@@ -54,20 +152,24 @@
                     <h2 class="hero-subtitle">Makeup Artist in Madurai</h2>
                     <h1 class="hero-title">Vishwa Dharani</h1>
                     <p class="hero-tagline"><em>Exploring the world of matte & glow</em></p>
-                    <a href="https://instagram.com/blendedbyvish" target="_blank" rel="noopener noreferrer" class="btn btn-primary">
+                    <a href="https://instagram.com/blendedbyvish"
+                       target="_blank"
+                       rel="noopener noreferrer"
+                       class="btn btn-primary"
+                       aria-label="Book an Appointment on Instagram (opens in new tab)">
                         Book an Appointment
                     </a>
                 </div>
-                <div class="hero-image fade-in">
-                    <div class="image-placeholder hero-placeholder">
+                <figure class="hero-image fade-in">
+                    <div class="image-placeholder hero-placeholder" role="img" aria-label="Portrait of Vishwa Dharani, Makeup Artist in Madurai">
                         <span>Your Portrait</span>
                     </div>
-                </div>
+                </figure>
             </div>
         </section>
 
         <!-- Stats Bar -->
-        <section class="stats-bar">
+        <section class="stats-bar" role="region" aria-label="Social media statistics">
             <div class="stats-container">
                 <div class="stat-item">
                     <span class="stat-number">17</span>
@@ -92,17 +194,17 @@
                 <h2 class="section-title fade-in">My Expertise</h2>
                 <div class="services-grid">
                     <div class="service-card fade-in">
-                        <div class="service-icon">💄</div>
+                        <div class="service-icon" role="img" aria-label="Makeup Artist icon - lipstick emoji">💄</div>
                         <h3 class="service-title">Makeup Artist</h3>
                         <p class="service-description">Professional makeup services for bridal, party, and special occasions.</p>
                     </div>
                     <div class="service-card fade-in">
-                        <div class="service-icon">💇‍♀️</div>
+                        <div class="service-icon" role="img" aria-label="Hair Stylist icon - person getting haircut emoji">💇‍♀️</div>
                         <h3 class="service-title">Hair Stylist</h3>
                         <p class="service-description">Expert hair styling to complement your overall look.</p>
                     </div>
                     <div class="service-card fade-in">
-                        <div class="service-icon">🎀</div>
+                        <div class="service-icon" role="img" aria-label="Saree Drapist icon - ribbon emoji">🎀</div>
                         <h3 class="service-title">Saree Drapist</h3>
                         <p class="service-description">Perfect saree draping for traditional and modern styles.</p>
                     </div>
@@ -115,46 +217,94 @@
             <div class="container">
                 <h2 class="section-title fade-in">Latest Looks</h2>
                 <div class="portfolio-grid">
-                    <div class="portfolio-item fade-in" data-title="Bridal Look - Muhurtham" data-category="Bridal">
-                        <div class="portfolio-placeholder">
+                    <figure class="portfolio-item fade-in"
+                            data-title="Bridal Look - Muhurtham"
+                            data-category="Bridal"
+                            role="group"
+                            aria-label="Portfolio: Bridal Look - Muhurtham, Bridal category">
+                        <div class="portfolio-placeholder"
+                             role="img"
+                             aria-label="Bridal makeup for Muhurtham ceremony featuring traditional South Indian look with gold jewelry and flower garland">
                             <span>Look 1</span>
                         </div>
-                    </div>
-                    <div class="portfolio-item fade-in" data-title="Reception Glam - Smokey Eyes" data-category="Party">
-                        <div class="portfolio-placeholder">
+                    </figure>
+                    <figure class="portfolio-item fade-in"
+                            data-title="Reception Glam - Smokey Eyes"
+                            data-category="Party"
+                            role="group"
+                            aria-label="Portfolio: Reception Glam - Smokey Eyes, Party category">
+                        <div class="portfolio-placeholder"
+                             role="img"
+                             aria-label="Reception glam makeup with smokey eyes and bold lip color for evening celebration">
                             <span>Look 2</span>
                         </div>
-                    </div>
-                    <div class="portfolio-item fade-in" data-title="Engagement Ceremony - Natural Glow" data-category="Bridal">
-                        <div class="portfolio-placeholder">
+                    </figure>
+                    <figure class="portfolio-item fade-in"
+                            data-title="Engagement Ceremony - Natural Glow"
+                            data-category="Bridal"
+                            role="group"
+                            aria-label="Portfolio: Engagement Ceremony - Natural Glow, Bridal category">
+                        <div class="portfolio-placeholder"
+                             role="img"
+                             aria-label="Engagement ceremony makeup with natural glow and soft pink tones for fresh daytime look">
                             <span>Look 3</span>
                         </div>
-                    </div>
-                    <div class="portfolio-item fade-in" data-title="Traditional South Indian Look" data-category="Traditional">
-                        <div class="portfolio-placeholder">
+                    </figure>
+                    <figure class="portfolio-item fade-in"
+                            data-title="Traditional South Indian Look"
+                            data-category="Traditional"
+                            role="group"
+                            aria-label="Portfolio: Traditional South Indian Look, Traditional category">
+                        <div class="portfolio-placeholder"
+                             role="img"
+                             aria-label="Traditional South Indian bridal makeup with dramatic eyes, red lips, and gold temple jewelry">
                             <span>Look 4</span>
                         </div>
-                    </div>
-                    <div class="portfolio-item fade-in" data-title="Party Ready - Winged Liner" data-category="Party">
-                        <div class="portfolio-placeholder">
+                    </figure>
+                    <figure class="portfolio-item fade-in"
+                            data-title="Party Ready - Winged Liner"
+                            data-category="Party"
+                            role="group"
+                            aria-label="Portfolio: Party Ready - Winged Liner, Party category">
+                        <div class="portfolio-placeholder"
+                             role="img"
+                             aria-label="Party ready makeup look with winged eyeliner and highlighted cheekbones for modern glam style">
                             <span>Look 5</span>
                         </div>
-                    </div>
-                    <div class="portfolio-item fade-in" data-title="Haldi Ceremony - Fresh & Dewy" data-category="Bridal">
-                        <div class="portfolio-placeholder">
+                    </figure>
+                    <figure class="portfolio-item fade-in"
+                            data-title="Haldi Ceremony - Fresh & Dewy"
+                            data-category="Bridal"
+                            role="group"
+                            aria-label="Portfolio: Haldi Ceremony - Fresh & Dewy, Bridal category">
+                        <div class="portfolio-placeholder"
+                             role="img"
+                             aria-label="Haldi ceremony makeup with fresh dewy finish and minimal products for natural radiance">
                             <span>Look 6</span>
                         </div>
-                    </div>
-                    <div class="portfolio-item fade-in" data-title="Contemporary Makeup - Bold Lips" data-category="Editorial">
-                        <div class="portfolio-placeholder">
+                    </figure>
+                    <figure class="portfolio-item fade-in"
+                            data-title="Contemporary Makeup - Bold Lips"
+                            data-category="Editorial"
+                            role="group"
+                            aria-label="Portfolio: Contemporary Makeup - Bold Lips, Editorial category">
+                        <div class="portfolio-placeholder"
+                             role="img"
+                             aria-label="Contemporary makeup featuring bold lips and defined eyebrows for modern fashion look">
                             <span>Look 7</span>
                         </div>
-                    </div>
-                    <div class="portfolio-item fade-in" data-title="Pre-Wedding Shoot" data-category="Bridal">
-                        <div class="portfolio-placeholder">
+                    </figure>
+                    <figure class="portfolio-item fade-in"
+                            data-title="Pre-Wedding Shoot"
+                            data-category="Bridal"
+                            role="group"
+                            aria-label="Portfolio: Pre-Wedding Shoot, Bridal category">
+                        <div class="portfolio-placeholder"
+                             role="img"
+                             aria-label="Pre-wedding shoot makeup with camera-ready finish and soft romantic styling">
                             <span>Look 8</span>
                         </div>
-                    </div>
+                    </figure>
                 </div>
             </div>
         </section>
@@ -166,20 +316,33 @@
                 <p class="section-subtitle fade-in">Drag the slider to see the magic</p>
                 <div class="comparison-slider fade-in">
                     <div class="comparison-container">
-                        <div class="comparison-item">
+                        <div class="comparison-item"
+                             role="region"
+                             aria-label="Before and after makeup comparison. Use arrow keys to adjust slider.">
                             <div class="comparison-before">
-                                <div class="comparison-placeholder">
+                                <div class="comparison-placeholder"
+                                     role="img"
+                                     aria-label="Before: Natural face without makeup for bride transformation">
                                     <span>Before</span>
                                 </div>
                             </div>
                             <div class="comparison-after">
-                                <div class="comparison-placeholder after">
+                                <div class="comparison-placeholder after"
+                                     role="img"
+                                     aria-label="After: Complete bridal makeup with traditional styling for muhurtham ceremony">
                                     <span>After</span>
                                 </div>
                             </div>
-                            <div class="comparison-handle">
+                            <div class="comparison-handle"
+                                 role="slider"
+                                 tabindex="0"
+                                 aria-label="Comparison slider"
+                                 aria-valuemin="0"
+                                 aria-valuemax="100"
+                                 aria-valuenow="50"
+                                 aria-valuetext="50 percent">
                                 <div class="handle-line"></div>
-                                <div class="handle-button">
+                                <div class="handle-button" aria-hidden="true">
                                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                         <polyline points="15 18 9 12 15 6"></polyline>
                                         <polyline points="9 18 3 12 9 6" transform="translate(12,0)"></polyline>
@@ -190,20 +353,33 @@
                         <p class="comparison-caption">Bridal Transformation - Muhurtham Look</p>
                     </div>
                     <div class="comparison-container">
-                        <div class="comparison-item">
+                        <div class="comparison-item"
+                             role="region"
+                             aria-label="Before and after makeup comparison. Use arrow keys to adjust slider.">
                             <div class="comparison-before">
-                                <div class="comparison-placeholder">
+                                <div class="comparison-placeholder"
+                                     role="img"
+                                     aria-label="Before: Casual look for party makeup transformation">
                                     <span>Before</span>
                                 </div>
                             </div>
                             <div class="comparison-after">
-                                <div class="comparison-placeholder after">
+                                <div class="comparison-placeholder after"
+                                     role="img"
+                                     aria-label="After: Glamorous party makeup with contour and highlight">
                                     <span>After</span>
                                 </div>
                             </div>
-                            <div class="comparison-handle">
+                            <div class="comparison-handle"
+                                 role="slider"
+                                 tabindex="0"
+                                 aria-label="Comparison slider"
+                                 aria-valuemin="0"
+                                 aria-valuemax="100"
+                                 aria-valuenow="50"
+                                 aria-valuetext="50 percent">
                                 <div class="handle-line"></div>
-                                <div class="handle-button">
+                                <div class="handle-button" aria-hidden="true">
                                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                         <polyline points="15 18 9 12 15 6"></polyline>
                                         <polyline points="9 18 3 12 9 6" transform="translate(12,0)"></polyline>
@@ -223,38 +399,46 @@
                 <h2 class="section-title fade-in">Client Love</h2>
                 <div class="testimonials-carousel fade-in">
                     <div class="testimonial-track">
-                        <div class="testimonial-item">
-                            <div class="testimonial-content">
+                        <article class="testimonial-item">
+                            <blockquote class="testimonial-content">
                                 <div class="testimonial-stars">★★★★★</div>
                                 <p class="testimonial-text">"Vishwa did my bridal makeup and I absolutely loved it! She understood exactly what I wanted and delivered beyond my expectations. The makeup stayed fresh throughout my wedding ceremony."</p>
-                                <p class="testimonial-author">- Priya S.</p>
+                                <footer class="testimonial-author">
+                                    <cite>- Priya S.</cite>
+                                </footer>
                                 <p class="testimonial-event">Bridal Client, December 2024</p>
-                            </div>
-                        </div>
-                        <div class="testimonial-item">
-                            <div class="testimonial-content">
+                            </blockquote>
+                        </article>
+                        <article class="testimonial-item">
+                            <blockquote class="testimonial-content">
                                 <div class="testimonial-stars">★★★★★</div>
                                 <p class="testimonial-text">"Professional, talented, and so patient! Vishwa did my sister's engagement makeup and received so many compliments. Highly recommend her for any special occasion."</p>
-                                <p class="testimonial-author">- Meena R.</p>
+                                <footer class="testimonial-author">
+                                    <cite>- Meena R.</cite>
+                                </footer>
                                 <p class="testimonial-event">Engagement Client, November 2024</p>
-                            </div>
-                        </div>
-                        <div class="testimonial-item">
-                            <div class="testimonial-content">
+                            </blockquote>
+                        </article>
+                        <article class="testimonial-item">
+                            <blockquote class="testimonial-content">
                                 <div class="testimonial-stars">★★★★★</div>
                                 <p class="testimonial-text">"The saree draping was perfect! She knows so many different styles and helped me choose the perfect one for my reception. Will definitely book again!"</p>
-                                <p class="testimonial-author">- Anitha K.</p>
+                                <footer class="testimonial-author">
+                                    <cite>- Anitha K.</cite>
+                                </footer>
                                 <p class="testimonial-event">Reception Client, January 2024</p>
-                            </div>
-                        </div>
-                        <div class="testimonial-item">
-                            <div class="testimonial-content">
+                            </blockquote>
+                        </article>
+                        <article class="testimonial-item">
+                            <blockquote class="testimonial-content">
                                 <div class="testimonial-stars">★★★★★</div>
                                 <p class="testimonial-text">"Amazing work! She's very professional and uses high-quality products. My makeup looked flawless in all the photos. Thank you, Vishwa!"</p>
-                                <p class="testimonial-author">- Divya M.</p>
+                                <footer class="testimonial-author">
+                                    <cite>- Divya M.</cite>
+                                </footer>
                                 <p class="testimonial-event">Party Makeup, January 2024</p>
-                            </div>
-                        </div>
+                            </blockquote>
+                        </article>
                     </div>
                     <div class="testimonial-nav">
                         <button class="testimonial-dot active" data-index="0" aria-label="View testimonial 1"></button>
@@ -271,60 +455,54 @@
             <div class="container">
                 <h2 class="section-title fade-in">Packages & FAQ</h2>
                 <div class="faq-container fade-in">
-                    <div class="faq-item">
-                        <button class="faq-question" aria-expanded="false">
+                    <details class="faq-item">
+                        <summary class="faq-question" aria-expanded="false" aria-controls="faq-answer-1">
                             <span>What makeup brands do you use?</span>
-                            <span class="faq-icon">+</span>
-                        </button>
-                        <div class="faq-answer">
+                        </summary>
+                        <div class="faq-answer" id="faq-answer-1" role="region">
                             <p>I use premium, bridal-quality brands including MAC, Charlotte Tilbury, Huda Beauty, NARS, and Dior. All products are authentic and suitable for Indian skin tones.</p>
                         </div>
-                    </div>
-                    <div class="faq-item">
-                        <button class="faq-question" aria-expanded="false">
+                    </details>
+                    <details class="faq-item">
+                        <summary class="faq-question" aria-expanded="false" aria-controls="faq-answer-2">
                             <span>Do you provide trial makeup sessions?</span>
-                            <span class="faq-icon">+</span>
-                        </button>
-                        <div class="faq-answer">
+                        </summary>
+                        <div class="faq-answer" id="faq-answer-2" role="region">
                             <p>Yes! I strongly recommend a trial session before your big day. This helps us understand your preferences, skin type, and the look you want to achieve. Trial sessions are charged at 50% of the final makeup cost.</p>
                         </div>
-                    </div>
-                    <div class="faq-item">
-                        <button class="faq-question" aria-expanded="false">
+                    </details>
+                    <details class="faq-item">
+                        <summary class="faq-question" aria-expanded="false" aria-controls="faq-answer-3">
                             <span>Do you travel for weddings outside Madurai?</span>
-                            <span class="faq-icon">+</span>
-                        </button>
-                        <div class="faq-answer">
+                        </summary>
+                        <div class="faq-answer" id="faq-answer-3" role="region">
                             <p>Absolutely! I'm available for destination weddings across Tamil Nadu and Kerala. Travel and accommodation expenses will be additional, depending on the location.</p>
                         </div>
-                    </div>
-                    <div class="faq-item">
-                        <button class="faq-question" aria-expanded="false">
+                    </details>
+                    <details class="faq-item">
+                        <summary class="faq-question" aria-expanded="false" aria-controls="faq-answer-4">
                             <span>How long does a bridal makeup session take?</span>
-                            <span class="faq-icon">+</span>
-                        </button>
-                        <div class="faq-answer">
+                        </summary>
+                        <div class="faq-answer" id="faq-answer-4" role="region">
                             <p>A complete bridal session including hair styling and saree draping typically takes 2.5 to 3 hours. I recommend starting 4 hours before the ceremony to ensure a relaxed and stress-free experience.</p>
                         </div>
-                    </div>
-                    <div class="faq-item">
-                        <button class="faq-question" aria-expanded="false">
+                    </details>
+                    <details class="faq-item">
+                        <summary class="faq-question" aria-expanded="false" aria-controls="faq-answer-5">
                             <span>What are your bridal packages?</span>
-                            <span class="faq-icon">+</span>
-                        </button>
-                        <div class="faq-answer">
+                        </summary>
+                        <div class="faq-answer" id="faq-answer-5" role="region">
                             <p>I offer three packages: Classic (₹15,000 - Makeup + Hair), Premium (₹25,000 - Includes saree draping and trial), and Royal (₹35,000 - Complete bridal package with engagement makeup). DM for detailed inclusions.</p>
                         </div>
-                    </div>
-                    <div class="faq-item">
-                        <button class="faq-question" aria-expanded="false">
+                    </details>
+                    <details class="faq-item">
+                        <summary class="faq-question" aria-expanded="false" aria-controls="faq-answer-6">
                             <span>Do you provide makeup for the groom and family?</span>
-                            <span class="faq-icon">+</span>
-                        </button>
-                        <div class="faq-answer">
+                        </summary>
+                        <div class="faq-answer" id="faq-answer-6" role="region">
                             <p>Yes, I provide groom makeup and styling for family members. Groom packages start at ₹5,000. Family makeup packages are available for groups. Contact me for custom quotes.</p>
                         </div>
-                    </div>
+                    </details>
                 </div>
             </div>
         </section>
