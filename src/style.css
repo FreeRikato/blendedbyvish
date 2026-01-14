@@ -10,8 +10,8 @@
     --color-accent: #FFD1BA;
 
     /* Typography */
-    --font-heading: 'Playfair Display', serif;
-    --font-body: 'Lato', sans-serif;
+    --font-heading: 'Cormorant Garamond', serif;
+    --font-body: 'Montserrat', sans-serif;
 
     /* Fluid Typography */
     --font-size-base: clamp(0.875rem, 0.8rem + 0.25vw, 1rem);
@@ -214,7 +214,7 @@ body {
 }
 
 .hamburger.active .hamburger-line:nth-child(1) {
-    transform: rotate(45deg) translate(6px, 4px);
+    transform: rotate(45deg) translateY(6px);
 }
 
 .hamburger.active .hamburger-line:nth-child(2) {
@@ -222,7 +222,7 @@ body {
 }
 
 .hamburger.active .hamburger-line:nth-child(3) {
-    transform: rotate(-45deg) translate(6px, -8px);
+    transform: rotate(-45deg) translateY(-6px);
 }
 
 /* ===================================
@@ -650,12 +650,12 @@ body {
 }
 
 /* ===================================
-   FOOTER
+   FOOTER - ELEGANT REDESIGN
    =================================== */
 .footer {
     background-color: var(--color-text);
     color: var(--color-background);
-    padding: var(--spacing-lg) var(--spacing-md);
+    padding: var(--spacing-xl) var(--spacing-md);
 }
 
 .footer-container {
@@ -664,34 +664,106 @@ body {
     text-align: center;
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-sm);
+    gap: var(--spacing-lg);
 }
 
 .footer-text {
-    font-family: var(--font-body);
-    font-size: 1rem;
-    opacity: 0.9;
-}
-
-.footer-social {
     font-family: var(--font-heading);
-    font-size: 1.25rem;
-    color: var(--color-accent);
-    text-decoration: none;
-    transition: color var(--transition-fast);
-}
-
-@media (hover: hover) {
-    .footer-social:hover {
-        color: var(--color-primary);
-    }
+    font-size: var(--font-size-lg);
+    font-weight: 500;
+    opacity: 0.95;
+    letter-spacing: 0.02em;
 }
 
 .footer-copyright {
     font-family: var(--font-body);
-    font-size: 0.9rem;
+    font-size: var(--font-size-sm);
     opacity: 0.7;
     margin-top: var(--spacing-sm);
+    letter-spacing: 0.05em;
+}
+
+.contact-links {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-lg);
+    margin-top: var(--spacing-sm);
+    align-items: center;
+}
+
+.contact-link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    font-family: var(--font-body);
+    font-size: var(--font-size-base);
+    font-weight: 600;
+    padding: 0.875rem 1.5rem;
+    border-radius: 50px;
+    text-decoration: none;
+    color: white;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    min-height: 60px;
+    min-width: 200px;
+}
+
+.contact-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+}
+
+.contact-icon svg {
+    width: 100%;
+    height: 100%;
+}
+
+.contact-text {
+    letter-spacing: 0.03em;
+}
+
+/* WhatsApp - Primary Color Gradient */
+.contact-whatsapp {
+    background: linear-gradient(135deg, var(--color-primary) 0%, #c49393 100%);
+    box-shadow: 0 4px 12px rgba(212, 163, 163, 0.3);
+}
+
+/* Instagram - Accent Color Gradient */
+.contact-instagram {
+    background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-primary) 100%);
+    box-shadow: 0 4px 12px rgba(255, 209, 186, 0.3);
+}
+
+@media (hover: hover) {
+    .contact-link:hover {
+        transform: translateY(-4px) scale(1.02);
+        box-shadow: 0 8px 20px rgba(212, 163, 163, 0.4);
+    }
+
+    .contact-whatsapp:hover {
+        background: linear-gradient(135deg, #c49393 0%, #b88383 100%);
+    }
+
+    .contact-instagram:hover {
+        background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
+    }
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .contact-links {
+        flex-direction: column;
+        gap: var(--spacing-md);
+        align-items: center;
+    }
+
+    .contact-link {
+        width: 100%;
+        max-width: 300px;
+        justify-content: center;
+    }
 }
 
 /* ===================================
@@ -1188,8 +1260,8 @@ body {
     /* Prevent image selection and native dragging */
     user-select: none;
     -webkit-user-select: none;
-    /* Allow vertical scroll but capture horizontal gestures for touch devices */
-    touch-action: pan-y pinch-zoom;
+    /* FIX: Use none to control all touch behavior via JS for smooth mobile performance */
+    touch-action: none;
 }
 
 .comparison-before,
@@ -1204,6 +1276,7 @@ body {
 .comparison-after {
     clip-path: inset(0 calc(100% - var(--slider-position)) 0 0); /* Use CSS variable for performance */
     will-change: clip-path; /* Performance: Hint for GPU acceleration */
+    touch-action: none; /* FIX: Prevent touch interference on mobile */
 }
 
 .comparison-placeholder {

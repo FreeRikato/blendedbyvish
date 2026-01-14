@@ -630,13 +630,15 @@ const initComparisonSlider = (): void => {
         // Touch events - Attach to entire item for better mobile UX
         let touchStartX = 0;
         let touchStartY = 0;
-        const DRAG_THRESHOLD = 10; // Minimum pixels to determine intent
+        const DRAG_THRESHOLD = 3; // FIX: Lower threshold for faster mobile response
 
         const touchStartHandler = (e: TouchEvent): void => {
             isDragging = true;
             clearCache();
             touchStartX = e.touches[0].clientX;
             touchStartY = e.touches[0].clientY;
+            // FIX: Prevent default immediately to stop browser interference
+            e.preventDefault();
             // Update position immediately on touch for better responsiveness
             updateSlider(touchStartX);
         };
@@ -648,14 +650,15 @@ const initComparisonSlider = (): void => {
             const deltaX = Math.abs(touch.clientX - touchStartX);
             const deltaY = Math.abs(touch.clientY - touchStartY);
 
-            // Only prevent default if user is clearly dragging horizontally
-            // and has moved beyond the threshold
+            // FIX: Only prevent default if user is clearly dragging horizontally
+            // and has moved beyond the threshold (for more precise control)
             if (deltaX > deltaY && deltaX > DRAG_THRESHOLD) {
                 e.preventDefault(); // Block scroll only for horizontal drags
                 updateSlider(touch.clientX);
-            } else if (deltaY > deltaX && deltaY > DRAG_THRESHOLD) {
-                // Allow vertical scrolling to proceed naturally
-                isDragging = false;
+            } else if (deltaX > DRAG_THRESHOLD) {
+                // FIX: Also prevent scrolling if we've moved enough horizontally
+                e.preventDefault();
+                updateSlider(touch.clientX);
             }
         };
 
@@ -1031,7 +1034,6 @@ const initAllFeatures = (): void => {
         { name: 'FAQ Accessibility', init: initFAQAccessibility },
         { name: 'Navigation Accessibility', init: initNavigationAccessibility },
         { name: 'Portfolio Filter', init: initPortfolioFilter },
-        { name: 'Contact Form', init: initContactForm },
         { name: 'Image Error Handler', init: initImageErrorHandler },
     ];
 
@@ -1054,150 +1056,7 @@ const initAllFeatures = (): void => {
     }
 };
 
-/**
- * Initialize Contact Form
- * Handles form submission with Web3Forms API
- */
-const initContactForm = (): void => {
-    const form = document.getElementById('contact-form') as HTMLFormElement;
-    const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
-    const btnText = submitBtn.querySelector('.btn-text') as HTMLElement;
-    const btnLoading = submitBtn.querySelector('.btn-loading') as HTMLElement;
-    const messageDiv = document.getElementById('form-message') as HTMLElement;
 
-    if (!form || !submitBtn || !btnText || !btnLoading || !messageDiv) return;
-
-    // Set minimum date to today
-    const dateInput = form.querySelector('#event-date') as HTMLInputElement;
-    if (dateInput) {
-        const today = new Date().toISOString().split('T')[0];
-        dateInput.min = today;
-    }
-
-    const successMessage = document.getElementById('contact-success') as HTMLElement;
-    const errorMessage = document.getElementById('contact-error') as HTMLElement;
-
-    // Form validation function
-    const validateForm = (): boolean => {
-        const nameInput = document.getElementById('name') as HTMLInputElement;
-        const phoneInput = document.getElementById('phone') as HTMLInputElement;
-        const eventDateInput = document.getElementById('event-date') as HTMLInputElement;
-        const serviceTypeSelect = document.getElementById('service-type') as HTMLSelectElement;
-
-        let isValid = true;
-
-        // Check required fields
-        if (!nameInput.value.trim()) {
-            nameInput.setCustomValidity('Name is required');
-            isValid = false;
-        } else {
-            nameInput.setCustomValidity('');
-        }
-
-        if (!phoneInput.value.trim()) {
-            phoneInput.setCustomValidity('Phone number is required');
-            isValid = false;
-        } else if (!phoneInput.checkValidity()) {
-            phoneInput.setCustomValidity('Please enter a valid 10-digit Indian mobile number');
-            isValid = false;
-        } else {
-            phoneInput.setCustomValidity('');
-        }
-
-        if (!eventDateInput.value) {
-            eventDateInput.setCustomValidity('Event date is required');
-            isValid = false;
-        } else {
-            eventDateInput.setCustomValidity('');
-        }
-
-        if (!serviceTypeSelect.value) {
-            serviceTypeSelect.setCustomValidity('Please select a service type');
-            isValid = false;
-        } else {
-            serviceTypeSelect.setCustomValidity('');
-        }
-
-        // Report validity to show browser validation messages
-        form.reportValidity();
-        return isValid;
-    };
-
-    // Show loading state
-    const setLoadingState = (loading: boolean): void => {
-        submitBtn.disabled = loading;
-        btnText.style.display = loading ? 'none' : 'inline';
-        btnLoading.style.display = loading ? 'inline' : 'none';
-    };
-
-    // Show message
-    const showMessage = (message: string, isSuccess: boolean): void => {
-        messageDiv.textContent = message;
-        messageDiv.className = `form-message ${isSuccess ? 'success' : 'error'}`;
-        messageDiv.style.display = 'block';
-
-        // Hide message after 5 seconds
-        setTimeout(() => {
-            messageDiv.style.display = 'none';
-        }, 5000);
-    };
-
-    // Handle form submission
-    form.addEventListener('submit', async (e: Event): Promise<void> => {
-        e.preventDefault();
-
-        if (!validateForm()) return;
-
-        setLoadingState(true);
-
-        try {
-            const formData = new FormData(form);
-
-            const response = await fetch('https://api.web3forms.com/submit', {
-                method: 'POST',
-                body: formData
-            });
-
-            const data = await response.json();
-
-            if (data.success) {
-                showMessage('Thank you! Your inquiry has been sent successfully. We\'ll get back to you soon!', true);
-                form.reset();
-                // Show success message div
-                form.style.display = 'none';
-                if (successMessage) successMessage.style.display = 'block';
-            } else {
-                throw new Error(data.message || 'Submission failed');
-            }
-        } catch (error) {
-            console.error('Form submission error:', error);
-            showMessage('Sorry, there was an error sending your message. Please try again or contact us directly.', false);
-            if (errorMessage) {
-                errorMessage.textContent = 'Sorry, there was an error sending your message. Please try again or contact us directly.';
-                errorMessage.style.display = 'block';
-                setTimeout(() => errorMessage.style.display = 'none', 5000);
-            }
-        } finally {
-            setLoadingState(false);
-        }
-    });
-
-    // Real-time validation feedback
-    const inputs = form.querySelectorAll('input, select');
-    inputs.forEach((input) => {
-        input.addEventListener('blur', (): void => {
-            (input as HTMLInputElement).checkValidity();
-        });
-
-        input.addEventListener('input', (): void => {
-            if ((input as HTMLInputElement).validity.valid) {
-                (input as HTMLInputElement).setCustomValidity('');
-            }
-        });
-    });
-
-    console.log('📧 Contact form initialized with Web3Forms integration');
-};
 
 // Initialize all new features
 initAllFeatures();
