@@ -65,7 +65,7 @@ if (hamburger && navMenu) {
         // Only prevent default if it's a right-edge swipe (left to right)
         // and we're not in the middle of the comparison slider
         const isRightEdgeSwipe = touchStartX < 20 && deltaX > 50 && Math.abs(deltaY) < 50;
-        const isComparisonSlider = (e.target as HTMLElement).closest('.comparison-item');
+        const isComparisonSlider = e.target instanceof HTMLElement && e.target.closest('.comparison-item');
 
         if (isRightEdgeSwipe && !isComparisonSlider && !navMenu.classList.contains('active')) {
             // Allow the swipe to proceed (don't prevent default)
@@ -208,7 +208,9 @@ portfolioItems.forEach((item): void => {
         const keyboardEvent = event as KeyboardEvent;
         if (keyboardEvent.key === 'Enter' || keyboardEvent.key === ' ') {
             keyboardEvent.preventDefault();
-            (item as HTMLElement).click();
+            if (item instanceof HTMLElement) {
+                item.click();
+            }
         }
     });
 });
@@ -236,16 +238,16 @@ window.addEventListener('load', (): void => {
 const serviceCards = document.querySelectorAll('.service-card');
 
 serviceCards.forEach((card): void => {
-    const htmlCard = card as HTMLElement;
+        if (!(card instanceof HTMLElement)) return;
 
-    card.addEventListener('mouseenter', (): void => {
-        // Optional: Add additional hover effects here
-        htmlCard.style.transform = 'translateY(-12px)';
-    });
+        card.addEventListener('mouseenter', (): void => {
+            // Optional: Add additional hover effects here
+            card.style.transform = 'translateY(-12px)';
+        });
 
-    card.addEventListener('mouseleave', (): void => {
-        htmlCard.style.transform = 'translateY(-8px)';
-    });
+        card.addEventListener('mouseleave', (): void => {
+            card.style.transform = 'translateY(-8px)';
+        });
 });
 
 // ===================================
@@ -300,16 +302,100 @@ document.addEventListener('visibilitychange', (): void => {
 // ===================================
 
 /**
+ * Initialize Portfolio Filtering System
+ * Handles category-based filtering with animations
+ */
+const initPortfolioFilter = (): void => {
+    const filterButtons = document.querySelectorAll('.filter-btn');
+    const portfolioItems = document.querySelectorAll('.portfolio-item');
+
+    if (filterButtons.length === 0 || portfolioItems.length === 0) {
+        console.log('⚠️ Portfolio filter elements not found');
+        return;
+    }
+
+    const filterItems = (category: string): void => {
+        portfolioItems.forEach((item) => {
+            const itemCategory = item.getAttribute('data-category');
+            const itemElement = item as HTMLElement;
+
+            if (category === 'all' || itemCategory === category) {
+                itemElement.style.opacity = '1';
+                itemElement.style.transform = 'scale(1)';
+                itemElement.style.display = 'block';
+            } else {
+                itemElement.style.opacity = '0';
+                itemElement.style.transform = 'scale(0.8)';
+                setTimeout(() => {
+                    itemElement.style.display = 'none';
+                }, 300);
+            }
+        });
+    };
+
+    filterButtons.forEach((button) => {
+        button.addEventListener('click', (e: Event) => {
+            const target = e.target as HTMLElement;
+            const category = target.getAttribute('data-filter') || 'all';
+
+            filterButtons.forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+
+            filterItems(category);
+        });
+    });
+
+    console.log('🔍 Portfolio filter initialized');
+};
+
+/**
+ * Initialize Broken Image Handler
+ * Replaces broken images with stylish gradient placeholders
+ */
+const initImageErrorHandler = (): void => {
+    const images = document.querySelectorAll('img');
+
+    images.forEach((img) => {
+        if (img.dataset.errorHandled) return;
+
+        img.addEventListener('error', (e: Event) => {
+            const imageElement = e.target as HTMLImageElement;
+
+            if (imageElement.dataset.errorHandled) return;
+
+            imageElement.dataset.errorHandled = 'true';
+            imageElement.style.display = 'none';
+
+            const parent = imageElement.parentElement;
+            if (parent) {
+                const placeholder = document.createElement('div');
+                placeholder.className = 'image-error-placeholder';
+                placeholder.setAttribute('role', 'img');
+                placeholder.setAttribute('aria-label', 'Image not available');
+                imageElement.after(placeholder);
+            }
+        });
+    });
+
+    console.log('🖼️ Image error handler initialized');
+};
+
+/**
  * Initialize Portfolio Lightbox
  * Handles full-screen modal with navigation and accessibility
  */
 const initLightbox = (): void => {
     const lightbox = document.getElementById('lightbox') as HTMLElement;
-    const lightboxClose = lightbox?.querySelector('.lightbox-close') as HTMLButtonElement;
-    const lightboxPrev = lightbox?.querySelector('.lightbox-prev') as HTMLButtonElement;
-    const lightboxNext = lightbox?.querySelector('.lightbox-next') as HTMLButtonElement;
-    const lightboxTitle = lightbox?.querySelector('.lightbox-title') as HTMLElement;
-    const lightboxCategory = lightbox?.querySelector('.lightbox-category') as HTMLElement;
+    if (!lightbox) {
+        console.log('⚠️ Lightbox not found');
+        return;
+    }
+
+    const lightboxClose = lightbox.querySelector('.lightbox-close') as HTMLButtonElement;
+    const lightboxPrev = lightbox.querySelector('.lightbox-prev') as HTMLButtonElement;
+    const lightboxNext = lightbox.querySelector('.lightbox-next') as HTMLButtonElement;
+    const lightboxTitle = lightbox.querySelector('.lightbox-title') as HTMLElement;
+    const lightboxCategory = lightbox.querySelector('.lightbox-category') as HTMLElement;
 
     const portfolioItems = document.querySelectorAll('.portfolio-item');
     let currentIndex = 0;
@@ -356,6 +442,14 @@ const initLightbox = (): void => {
         const imgElement = item.querySelector('.portfolio-img') as HTMLImageElement;
         const imgSrc = imgElement?.src || '';
 
+        // Add onerror to portfolio images if not already
+        if (imgElement && !imgElement.onerror) {
+            imgElement.onerror = () => {
+                imgElement.style.background = 'linear-gradient(45deg, #f3f4f6, #e5e7eb)';
+                imgElement.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiBmaWxsPSIjRjNGNEY2Ii8+Cjx0ZXh0IHg9IjUwIiB5PSI1MCIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjEyIiBmaWxsPSIjOUI5QkE0IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iMC4zZW0iPkltYWdlPC90ZXh0Pgo8L3N2Zz4=';
+            };
+        }
+
         // Store last focused element before opening
         lastFocusedElement = document.activeElement as HTMLElement;
 
@@ -367,6 +461,12 @@ const initLightbox = (): void => {
         if (lightboxImg) {
             lightboxImg.src = imgSrc;
             lightboxImg.alt = `${title}, ${category} portfolio work by Blended by Vish`;
+
+            // Generic onerror handler for broken images
+            lightboxImg.onerror = () => {
+                lightboxImg.style.background = 'linear-gradient(45deg, #f3f4f6, #e5e7eb)';
+                lightboxImg.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiBmaWxsPSIjRjNGNEY2Ii8+Cjx0ZXh0IHg9IjUwIiB5PSI1MCIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjEyIiBmaWxsPSIjOUI5QkE0IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iMC4zZW0iPkltYWdlPC90ZXh0Pgo8L3N2Zz4=';
+            };
         }
 
         lightbox?.classList.add('active');
@@ -613,11 +713,11 @@ const initComparisonSlider = (): void => {
  * Handles auto-scroll, manual navigation, and pause on hover
  */
 const initTestimonialsCarousel = (): void => {
-    const track = document.querySelector('.testimonial-track') as HTMLElement;
+    const track = document.querySelector('.testimonial-track');
     const dots = document.querySelectorAll('.testimonial-dot');
     const items = document.querySelectorAll('.testimonial-item');
 
-    if (!track || items.length === 0) return;
+    if (!(track instanceof HTMLElement) || items.length === 0) return;
 
     let currentIndex = 0;
     let autoScrollInterval: ReturnType<typeof setInterval>;
@@ -637,7 +737,8 @@ const initTestimonialsCarousel = (): void => {
 
     const scrollToItem = (index: number): void => {
         currentIndex = index;
-        const targetItem = items[index] as HTMLElement;
+        const targetItem = items[index] instanceof HTMLElement ? items[index] as HTMLElement : null;
+        if (!targetItem) return;
 
         if (targetItem && track) {
             // Scroll only the track, not the page
@@ -743,7 +844,9 @@ const initTestimonialsCarousel = (): void => {
     handlers.scroll = (): void => {
         const scrollCenter = track.scrollLeft + track.offsetWidth / 2;
 
-        items.forEach((item, index): void => {
+        for (let index = 0; index < items.length; index++) {
+            const item = items[index];
+            if (!(item instanceof HTMLElement)) continue;
             const htmlItem = item as HTMLElement;
             const itemCenter = htmlItem.offsetLeft + htmlItem.offsetWidth / 2;
             if (Math.abs(scrollCenter - itemCenter) < htmlItem.offsetWidth / 2) {
@@ -752,7 +855,7 @@ const initTestimonialsCarousel = (): void => {
                 });
                 currentIndex = index;
             }
-        });
+        }
     };
 
     track.addEventListener('scroll', handlers.scroll);
@@ -800,15 +903,17 @@ const initResizeHandlers = (): void => {
             }
 
             // 1. Recalculate testimonials carousel position
-            const track = document.querySelector('.testimonial-track') as HTMLElement;
+            const track = document.querySelector('.testimonial-track');
             const items = document.querySelectorAll('.testimonial-item');
             const dots = document.querySelectorAll('.testimonial-dot');
 
-            if (track && items.length > 0) {
+            if (track instanceof HTMLElement && items.length > 0) {
                 // Find current center item
                 const scrollCenter = track.scrollLeft + track.offsetWidth / 2;
 
-                items.forEach((item, index): void => {
+                for (let index = 0; index < items.length; index++) {
+                    const item = items[index];
+                    if (!(item instanceof HTMLElement)) continue;
                     const htmlItem = item as HTMLElement;
                     const itemCenter = htmlItem.offsetLeft + htmlItem.offsetWidth / 2;
 
@@ -817,20 +922,20 @@ const initResizeHandlers = (): void => {
                             dot.classList.toggle('active', i === index);
                         });
                     }
-                });
+                }
             }
 
             // 2. Reset comparison slider handles to center
             const comparisonItems = document.querySelectorAll('.comparison-item');
-            comparisonItems.forEach((item): void => {
-                const handle = item.querySelector('.comparison-handle') as HTMLElement;
-                const after = item.querySelector('.comparison-after') as HTMLElement;
+            for (let i = 0; i < comparisonItems.length; i++) {
+                const item = comparisonItems[i];
+                const handle = item.querySelector('.comparison-handle');
+                const after = item.querySelector('.comparison-after');
+                if (!(handle instanceof HTMLElement) || !(after instanceof HTMLElement)) continue;
 
-                if (handle && after) {
-                    handle.style.left = '50%';
-                    after.style.clipPath = 'inset(0 50% 0 0)';
-                }
-            });
+                handle.style.left = '50%';
+                after.style.clipPath = 'inset(0 50% 0 0)';
+            }
         }, 250); // Debounce by 250ms
     };
 
@@ -846,14 +951,14 @@ const initResizeHandlers = (): void => {
 const initFAQAccessibility = (): void => {
     const faqItems = document.querySelectorAll('.faq-item');
 
-    faqItems.forEach((item): void => {
-        const summary = item.querySelector('.faq-question') as HTMLElement;
+    for (let i = 0; i < faqItems.length; i++) {
+        const item = faqItems[i];
+        const summary = item.querySelector('.faq-question');
+        if (!(summary instanceof HTMLElement)) continue;
 
         const updateAriaExpanded = (): void => {
             const isOpen = item.hasAttribute('open');
-            if (summary) {
-                summary.setAttribute('aria-expanded', isOpen.toString());
-            }
+            summary.setAttribute('aria-expanded', isOpen.toString());
         };
 
         // Update on toggle
@@ -861,7 +966,7 @@ const initFAQAccessibility = (): void => {
 
         // Initial state
         updateAriaExpanded();
-    });
+    }
 
     console.log('📋 FAQ accessibility initialized');
 };
@@ -877,14 +982,16 @@ const initNavigationAccessibility = (): void => {
     const updateActiveNavLink = (): void => {
         let currentSection = '';
 
-        sections.forEach((section): void => {
-            const htmlSection = section as HTMLElement;
-            const sectionTop = htmlSection.offsetTop;
+    for (let i = 0; i < sections.length; i++) {
+        const section = sections[i];
+        if (!(section instanceof HTMLElement)) continue;
+        const htmlSection = section as HTMLElement;
+        const sectionTop = htmlSection.offsetTop;
 
-            if (window.scrollY >= sectionTop - 200) {
-                currentSection = section.getAttribute('id') || '';
-            }
-        });
+        if (window.scrollY >= sectionTop - 200) {
+            currentSection = section.getAttribute('id') || '';
+        }
+    }
 
         navLinks.forEach((link): void => {
             link.removeAttribute('aria-current');
@@ -916,24 +1023,180 @@ const initNavigationAccessibility = (): void => {
  * Initialize all new features
  */
 const initAllFeatures = (): void => {
-    // Wait for DOM to be ready
+    const features = [
+        { name: 'Lightbox', init: initLightbox },
+        { name: 'Comparison Slider', init: initComparisonSlider },
+        { name: 'Testimonials Carousel', init: initTestimonialsCarousel },
+        { name: 'Resize Handlers', init: initResizeHandlers },
+        { name: 'FAQ Accessibility', init: initFAQAccessibility },
+        { name: 'Navigation Accessibility', init: initNavigationAccessibility },
+        { name: 'Portfolio Filter', init: initPortfolioFilter },
+        { name: 'Contact Form', init: initContactForm },
+        { name: 'Image Error Handler', init: initImageErrorHandler },
+    ];
+
+    const initialize = (): void => {
+        features.forEach((feature) => {
+            try {
+                feature.init();
+            } catch (error) {
+                console.error(`❌ Failed to initialize ${feature.name}:`, error);
+            }
+        });
+    };
+
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', (): void => {
-            initLightbox();
-            initComparisonSlider();
-            initTestimonialsCarousel();
-            initResizeHandlers();
-            initFAQAccessibility();
-            initNavigationAccessibility();
+            initialize();
         });
     } else {
-        initLightbox();
-        initComparisonSlider();
-        initTestimonialsCarousel();
-        initResizeHandlers();
-        initFAQAccessibility();
-        initNavigationAccessibility();
+        initialize();
     }
+};
+
+/**
+ * Initialize Contact Form
+ * Handles form submission with Web3Forms API
+ */
+const initContactForm = (): void => {
+    const form = document.getElementById('contact-form') as HTMLFormElement;
+    const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
+    const btnText = submitBtn.querySelector('.btn-text') as HTMLElement;
+    const btnLoading = submitBtn.querySelector('.btn-loading') as HTMLElement;
+    const messageDiv = document.getElementById('form-message') as HTMLElement;
+
+    if (!form || !submitBtn || !btnText || !btnLoading || !messageDiv) return;
+
+    // Set minimum date to today
+    const dateInput = form.querySelector('#event-date') as HTMLInputElement;
+    if (dateInput) {
+        const today = new Date().toISOString().split('T')[0];
+        dateInput.min = today;
+    }
+
+    const successMessage = document.getElementById('contact-success') as HTMLElement;
+    const errorMessage = document.getElementById('contact-error') as HTMLElement;
+
+    // Form validation function
+    const validateForm = (): boolean => {
+        const nameInput = document.getElementById('name') as HTMLInputElement;
+        const phoneInput = document.getElementById('phone') as HTMLInputElement;
+        const eventDateInput = document.getElementById('event-date') as HTMLInputElement;
+        const serviceTypeSelect = document.getElementById('service-type') as HTMLSelectElement;
+
+        let isValid = true;
+
+        // Check required fields
+        if (!nameInput.value.trim()) {
+            nameInput.setCustomValidity('Name is required');
+            isValid = false;
+        } else {
+            nameInput.setCustomValidity('');
+        }
+
+        if (!phoneInput.value.trim()) {
+            phoneInput.setCustomValidity('Phone number is required');
+            isValid = false;
+        } else if (!phoneInput.checkValidity()) {
+            phoneInput.setCustomValidity('Please enter a valid 10-digit Indian mobile number');
+            isValid = false;
+        } else {
+            phoneInput.setCustomValidity('');
+        }
+
+        if (!eventDateInput.value) {
+            eventDateInput.setCustomValidity('Event date is required');
+            isValid = false;
+        } else {
+            eventDateInput.setCustomValidity('');
+        }
+
+        if (!serviceTypeSelect.value) {
+            serviceTypeSelect.setCustomValidity('Please select a service type');
+            isValid = false;
+        } else {
+            serviceTypeSelect.setCustomValidity('');
+        }
+
+        // Report validity to show browser validation messages
+        form.reportValidity();
+        return isValid;
+    };
+
+    // Show loading state
+    const setLoadingState = (loading: boolean): void => {
+        submitBtn.disabled = loading;
+        btnText.style.display = loading ? 'none' : 'inline';
+        btnLoading.style.display = loading ? 'inline' : 'none';
+    };
+
+    // Show message
+    const showMessage = (message: string, isSuccess: boolean): void => {
+        messageDiv.textContent = message;
+        messageDiv.className = `form-message ${isSuccess ? 'success' : 'error'}`;
+        messageDiv.style.display = 'block';
+
+        // Hide message after 5 seconds
+        setTimeout(() => {
+            messageDiv.style.display = 'none';
+        }, 5000);
+    };
+
+    // Handle form submission
+    form.addEventListener('submit', async (e: Event): Promise<void> => {
+        e.preventDefault();
+
+        if (!validateForm()) return;
+
+        setLoadingState(true);
+
+        try {
+            const formData = new FormData(form);
+
+            const response = await fetch('https://api.web3forms.com/submit', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                showMessage('Thank you! Your inquiry has been sent successfully. We\'ll get back to you soon!', true);
+                form.reset();
+                // Show success message div
+                form.style.display = 'none';
+                if (successMessage) successMessage.style.display = 'block';
+            } else {
+                throw new Error(data.message || 'Submission failed');
+            }
+        } catch (error) {
+            console.error('Form submission error:', error);
+            showMessage('Sorry, there was an error sending your message. Please try again or contact us directly.', false);
+            if (errorMessage) {
+                errorMessage.textContent = 'Sorry, there was an error sending your message. Please try again or contact us directly.';
+                errorMessage.style.display = 'block';
+                setTimeout(() => errorMessage.style.display = 'none', 5000);
+            }
+        } finally {
+            setLoadingState(false);
+        }
+    });
+
+    // Real-time validation feedback
+    const inputs = form.querySelectorAll('input, select');
+    inputs.forEach((input) => {
+        input.addEventListener('blur', (): void => {
+            (input as HTMLInputElement).checkValidity();
+        });
+
+        input.addEventListener('input', (): void => {
+            if ((input as HTMLInputElement).validity.valid) {
+                (input as HTMLInputElement).setCustomValidity('');
+            }
+        });
+    });
+
+    console.log('📧 Contact form initialized with Web3Forms integration');
 };
 
 // Initialize all new features

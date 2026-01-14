@@ -184,6 +184,13 @@
         <section id="portfolio" class="portfolio">
             <div class="container">
                 <h2 class="section-title fade-in">Latest Looks</h2>
+                <div class="portfolio-filters fade-in">
+                    <button class="filter-btn active" data-filter="all" aria-label="Show all portfolio items">All</button>
+                    <button class="filter-btn" data-filter="Bridal" aria-label="Show Bridal makeup portfolio">Bridal</button>
+                    <button class="filter-btn" data-filter="Party" aria-label="Show Party makeup portfolio">Party</button>
+                    <button class="filter-btn" data-filter="Traditional" aria-label="Show Traditional makeup portfolio">Traditional</button>
+                    <button class="filter-btn" data-filter="Editorial" aria-label="Show Editorial makeup portfolio">Editorial</button>
+                </div>
                 <div class="portfolio-grid">
                     <figure class="portfolio-item fade-in"
                             data-title="Bridal Look - Muhurtham"
@@ -539,7 +546,51 @@
     <!-- Footer -->
     <footer id="contact" class="footer">
         <div class="footer-container">
-            <p class="footer-text">Based in Madurai | DM for Work</p>
+            <p class="footer-text">Based in Madurai | Get in Touch</p>
+            <form id="contact-form" class="contact-form" action="https://api.web3forms.com/submit" method="POST">
+                <input type="hidden" name="access_key" value="YOUR_WEB3FORMS_ACCESS_KEY">
+                <input type="hidden" name="subject" value="New Booking Inquiry from Blended by Vish">
+                <input type="hidden" name="from_name" value="Blended by Vish Website">
+                <div class="form-group">
+                    <label for="name" class="form-label">Name</label>
+                    <input type="text" id="name" name="name" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label for="phone" class="form-label">Phone</label>
+                    <input type="tel" id="phone" name="phone" class="form-input" pattern="^[6-9]\d{9}$" title="Enter a valid 10-digit Indian mobile number starting with 6-9" required>
+                </div>
+                <div class="form-group">
+                    <label for="event-date" class="form-label">Event Date</label>
+                    <input type="date" id="event-date" name="event-date" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label for="service-type" class="form-label">Service Type</label>
+                    <select id="service-type" name="service-type" class="form-input" required>
+                        <option value="">Select a service</option>
+                        <option value="bridal-makeup">Bridal Makeup</option>
+                        <option value="party-makeup">Party Makeup</option>
+                        <option value="engagement-makeup">Engagement Makeup</option>
+                        <option value="hair-styling">Hair Styling</option>
+                        <option value="saree-draping">Saree Draping</option>
+                        <option value="trial-session">Trial Session</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <button type="submit" id="submit-btn" class="btn btn-primary form-submit-btn">
+                    <span class="btn-text">Send Inquiry</span>
+                    <span class="btn-loading" style="display: none;">Sending...</span>
+                </button>
+                <div id="form-message" class="form-message" style="display: none;"></div>
+            </form>
+
+            <div id="contact-success" class="contact-success" style="display: none;">
+                <div class="success-icon">✨</div>
+                <h3>Message Sent!</h3>
+                <p>Thank you for reaching out! I'll get back to you within 24 hours.</p>
+                <p>Feel free to reach out via <a href="https://wa.me/919787000453" target="_blank" rel="noopener noreferrer">WhatsApp</a> for faster response.</p>
+            </div>
+
+            <div id="contact-error" class="contact-error" style="display: none;" role="alert" aria-live="polite"></div>
             <a href="https://instagram.com/blendedbyvish" target="_blank" rel="noopener noreferrer" class="footer-social">
                 @blendedbyvish
             </a>
